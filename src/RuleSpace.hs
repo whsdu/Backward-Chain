@@ -18,5 +18,6 @@ data Rule =
     -- , getHead :: L.LiteralSpace RuleSpace
     }
 
+
 instance M.Literal Rule where 
     literal r = getName r 

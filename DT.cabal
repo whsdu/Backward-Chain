@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f54a414e4fd671c070cabfdbf0b0d2b9ae020ecfb63100bb4f4e17b1e798e3a6
+-- hash: 2c9a03c3706d541cd4e342d2d9c95ef8b83bc19805d8b8753240a0913ef7ee4a
 
 name:           DT
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Arena
       AtomSpace
       Lib
       Literal
@@ -39,6 +40,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , split
   default-language: Haskell2010
 
 executable DT-exe

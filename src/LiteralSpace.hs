@@ -5,7 +5,7 @@ module LiteralSpace
         Literal(..)
     ) where 
 
-import qualified MetaDefinition  as M 
+import qualified MetaDefinition  as M  
 
 data Literal = forall a . M.Literal a => Literal a
 
