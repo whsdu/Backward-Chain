@@ -5,7 +5,8 @@ module AtomSpace
 
 import qualified MetaDefinition as M 
 
-data Atom = Atom {getName :: M.Name}
+newtype Atom = Atom {atomName :: M.Name} deriving Show 
 
 instance M.Literal Atom where 
-    literal = getName 
+    literal = atomName
+

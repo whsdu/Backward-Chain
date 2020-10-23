@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 module RuleSpace 
     (
         Rule (..)
@@ -6,18 +7,18 @@ module RuleSpace
 
 
 import qualified MetaDefinition  as M 
-import LiteralSpace (Literal(..))
 
-
-data Rule = 
+data Rule = forall a . (M.Literal a) =>  
     Rule 
-    { getName :: M.Name 
+    { ruleName :: M.Name 
     , getImp :: M.Imp 
-    , getBogy :: [Literal]
-    , getHead :: Literal 
+    , getBody :: [a]
+    , getHead :: a
     -- , getHead :: L.LiteralSpace RuleSpace
-    }
-
+    } 
 
 instance M.Literal Rule where 
-    literal r = getName r 
+    literal  = ruleName 
+
+instance Show Rule where 
+    show Rule{..} = 
