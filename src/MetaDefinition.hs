@@ -1,16 +1,21 @@
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module MetaDefinition where 
+
 
 type Name = String 
 
-data Imp = S | D 
+data Imp = S | D | N
 
-class Literal a where 
-    literal :: a -> Name 
+instance Show Imp where 
+    show S = "->"
+    show D = "=>"
+    show N = " "
 
-class (Literal a, Literal b) => Negation a b where 
-    negation :: a -> b -> Bool 
-    neg :: a -> b 
+instance Eq Imp where 
+    (==) S S = True 
+    (==) D D = True
+    (==) _ _ = False
 
+class (Eq a) => Negation a where 
+    neg :: a -> a 
+    negation :: a -> a -> Bool 
+    negation a1 a2 = neg a1 == a2

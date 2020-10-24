@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2c9a03c3706d541cd4e342d2d9c95ef8b83bc19805d8b8753240a0913ef7ee4a
+-- hash: afaf6bc4c89262983ea3341ebc2e9411c2a14cd05c5cc416417a6b461b210e52
 
 name:           DT
 version:        0.1.0.0
@@ -28,12 +28,11 @@ source-repository head
 library
   exposed-modules:
       Arena
-      AtomSpace
+      Argumentation
+      Language
+      LAParser
       Lib
-      Literal
-      LiteralSpace
       MetaDefinition
-      RuleSpace
   other-modules:
       Paths_DT
   hs-source-dirs:
