@@ -2,12 +2,12 @@
 module Language where
 
 import           MetaDefinition  (Imp (..), Name, Negation (..))
-
+import qualified Data.HashMap.Strict as Map
 data Literal where
     Atom :: Name -> Literal
     Rule :: Name -> [Literal] -> Imp -> Literal -> Literal
 
-type LanguageSpace = [Literal]
+type LanguageSpace = Map.HashMap Name Literal
 -- | literal is function 'Name' , introduced in last line of page 2.
 -- Handle for rules to prevent other rule application is expressed in the
 -- instance of Negation
@@ -93,3 +93,11 @@ getRuleLiteral ar (l:ls)=
 
 closure :: [Literal] -> [Literal]
 closure = undefined
+
+-- | Once dataset has been converted to Landspace
+-- It would be not possible to has rules with no rule body. 
+validLanguageSpace 
+    :: LanguageSpace 
+    -> Either LanguageSpace LanguageSpace 
+validLanguageSpace = undefined 
+

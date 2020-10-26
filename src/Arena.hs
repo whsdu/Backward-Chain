@@ -69,28 +69,11 @@ a3 = demoArguments !! 4
 a2 = demoArguments !! 5 
 a1 = demoArguments !! 6 
 
--- | TODOs:
--- Is this Literal data type really necessary ?
--- language :: [Literal]
--- language = l
---     where
---         rList = Literal <$> ruleS ++ ruleD
---         aList = Literal <$> atoms
---         l = rList ++ aList
--- 
--- isApplicable :: Rule -> [Name] -> Bool
--- isApplicable (Rule _ _ body _) literals =
---     let
---         bs = literal <$> body
---     in and [b `elem` literals | b <- bs]
--- 
--- data Argument = Argument 
---     { argImp :: Imp 
---     , argConc :: Literal 
---     , argBody :: [Argument]
---     , argName :: Name 
---     }
--- 
--- subArguments :: Argument -> [Argument]
--- subArguments = undefined 
--- 
+
+-- | Benchmark test 
+datasetRoot :: FilePath
+datasetRoot = "./Example/Chains/"
+defeasibleRoot :: FilePath
+defeasibleRoot = datasetRoot ++ "Defeasbile"
+strictRoot :: FilePath
+strictRoot= datasetRoot ++ "Strict"

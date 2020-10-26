@@ -26,6 +26,7 @@ library:
   source-dirs: src
   dependencies: 
   - split
+  - unordered-containers
 
 executables:
   DT-exe:

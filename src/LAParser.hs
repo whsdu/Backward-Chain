@@ -4,8 +4,7 @@ import Language
 import Argumentation 
 import Control.Monad (guard)
 
-parsLanguageSource :: FilePath -> [Literal]
-parsLanguageSource = undefined 
+
 
 -- | check if same literal in data source is valid 
 -- 1. same atom literal has different Imp  (-> and ~>)
