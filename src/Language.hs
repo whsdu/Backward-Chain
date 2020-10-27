@@ -3,11 +3,14 @@ module Language where
 
 import           MetaDefinition  (Imp (..), Name, Negation (..))
 import qualified Data.HashMap.Strict as Map
+import Control.Monad (guard)
 data Literal where
     Atom :: Name -> Literal
     Rule :: Name -> [Literal] -> Imp -> Literal -> Literal
 
-type LanguageSpace = Map.HashMap Name Literal
+type LanguageSpace = [Literal]
+type LanguageMap = Map.HashMap Name Literal 
+
 -- | literal is function 'Name' , introduced in last line of page 2.
 -- Handle for rules to prevent other rule application is expressed in the
 -- instance of Negation
@@ -82,14 +85,35 @@ isApplicable (Atom _) _ = False
 
 -- | TODOs: env needed 
 -- work together with Argumentation.undercutting 
-getRuleLiteral :: AnonyRule -> [Literal] ->[Literal]
-getRuleLiteral ar (l:ls)= 
+retriveRuleFromAnon :: AnonyRule -> [Literal] ->[Literal]
+retriveRuleFromAnon ar (l:ls)= 
     case l of 
         r@Rule{} -> 
             if ar == AnonyRule r 
                 then [r]
-                else getRuleLiteral ar ls
-        Atom{} -> getRuleLiteral ar ls 
+                else retriveRuleFromAnon ar ls
+        Atom{} -> retriveRuleFromAnon ar ls 
+
+-- | Similar with the as parsBasicArgument 
+-- line 1-10 in algorithm AL 
+-- > 
+-- > let al = subBodys demoLiterals b
+-- > al 
+-- > [t,r2: ->t,c,r1: ->c,b,r7: c t=>b]
+-- > parsBasicArgument al demoArgumentNames
+-- > [A3 :A2 A1=>b,A2 :->c,A1 :->t]
+subBodys :: LanguageSpace -> Literal -> LanguageSpace
+subBodys ls l = accBodys [l] ls [] [] 
+    where 
+        accBodys [] _ _ acc = acc 
+        accBodys (ll:ls) lSpace seen acc = 
+            if 
+                ll `elem` seen then accBodys ls lSpace seen acc 
+                else
+                    let tmpR = [ r | r <-lSpace , ruleHead r == ll ]
+                        tmpLit = concat (ruleBody <$> tmpR) ++ ls 
+                    in accBodys tmpLit lSpace (ll : seen) (tmpR ++ acc)
+
 
 closure :: [Literal] -> [Literal]
 closure = undefined

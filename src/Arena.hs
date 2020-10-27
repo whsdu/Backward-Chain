@@ -36,6 +36,7 @@ ruleS = [r1,r2,r3,r4]
 ruleD :: [Literal]
 ruleD = [r5,r6,r7]
 
+rChain = undefined 
 --------- demo in paper ---------
 demoPoolSize :: Integer
 demoPoolSize = 100

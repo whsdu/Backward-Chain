@@ -3,7 +3,7 @@ module FileParser where
 import System.IO 
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
-import Language (Literal (..), LanguageSpace)
+import Language (Literal (..), LanguageSpace, LanguageMap)
 import MetaDefinition 
 
 data Knowledge = Knowledge 
@@ -33,7 +33,7 @@ parseWord w =
         [conclusionName,preferName] = splitOn "," conC
     in Knowledge ruleName premisesName impName conclusionName preferName
 
-k2l :: KnowledgeSpace -> LanguageSpace 
+k2l :: KnowledgeSpace -> LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty
     where 
         constructLS (k:ks) lsAcc = 
@@ -47,7 +47,7 @@ k2l knowledges = constructLS knowledges Map.empty
             in constructLS ks updateRuleAcc
         constructLS [] lsAcc  = lsAcc
 
-insertAtomsToLanguageSpace :: String -> [String] -> LanguageSpace -> (LanguageSpace, [Literal], Literal)
+insertAtomsToLanguageSpace :: String -> [String] -> LanguageMap -> (LanguageMap, [Literal], Literal)
 insertAtomsToLanguageSpace concName priNames ls = 
     let 
         (accPrim, primLiterals) = foldr insertOneAtom (ls,[]) priNames 
@@ -69,8 +69,8 @@ insertRuleToLanguageSpace
     -> String 
     -> [Literal]
     -> Literal  
-    -> LanguageSpace 
-    -> LanguageSpace
+    -> LanguageMap 
+    -> LanguageMap
 insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
     let 
         ruleBody = Map.lookup ruleName lspace 

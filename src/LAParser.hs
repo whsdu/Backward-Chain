@@ -1,7 +1,9 @@
 module LAParser where 
 
-import Language 
-import Argumentation 
+import Language ( Literal(Rule), literal ) 
+import Argumentation
+    ( ArgumentationSpace,
+      Argumentation(Argumentation, argName, argBody, argConc, argImp) ) 
 import Control.Monad (guard)
 
 

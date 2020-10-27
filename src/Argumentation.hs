@@ -12,8 +12,13 @@ module Argumentation
     , defeats
     )where 
 
-import Language 
-import MetaDefinition 
+import Language
+    ( AnonyRule(AnonyRule),
+      LanguageSpace,
+      Literal(Rule),
+      literal,
+      retriveRuleFromAnon) 
+import MetaDefinition ( Name, Imp(D), Negation(neg) ) 
 
 data Argumentation = Argumentation 
     { argName :: Name 
@@ -82,16 +87,16 @@ rebutting a b =
         && 
         D `elem` (argImp <$> bPrime)
 
--- | TODOs: env need includes Language Space and Prefererence
+-- | TODOs: env need includes LanguageSpace and Prefererence
 -- 1.  Language Space will be expanded as required .
-undercutting :: [Literal] -> Argumentation -> Argumentation -> Bool 
+undercutting :: LanguageSpace -> Argumentation -> Argumentation -> Bool 
 undercutting ls a b = 
     let 
         concA = argConc a 
-        negNameTRB = neg <$> getRuleLiteral (topRule b) ls 
+        negNameTRB = neg <$> retriveRuleFromAnon (topRule b) ls 
     in concA `elem` negNameTRB
 
-defeats :: [Literal] -> PreferrenceSpace -> Argumentation -> Argumentation  -> Bool 
+defeats :: LanguageSpace -> PreferrenceSpace -> Argumentation -> Argumentation  -> Bool 
 defeats ls ps a b = 
     let 
         isRebutting = a `rebutting` b 
