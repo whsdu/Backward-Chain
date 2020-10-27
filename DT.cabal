@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: af3742a7c37625efb4d33975286ec62ade89414867f920e66ebf19528d0e786f
+-- hash: f481a75313fa3fcce5f2430061b889eb8c3fb68a310ec87459eb42b7b1dc4349
 
 name:           DT
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       Arena
       Argumentation
+      BC
       FileParser
       Language
       LAParser
