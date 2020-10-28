@@ -3,7 +3,7 @@ module FileParser where
 import System.IO 
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
-import Language (Literal (..), LanguageSpace, LanguageMap)
+import Language (Literal (..), Language , LanguageMap)
 import MetaDefinition 
 
 data Knowledge = Knowledge 

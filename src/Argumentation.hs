@@ -14,7 +14,7 @@ module Argumentation
 
 import Language
     ( AnonyRule(AnonyRule),
-      LanguageSpace,
+      Language,
       Literal(Rule),
       literal,
       retriveRuleFromAnon) 
@@ -89,14 +89,14 @@ rebutting a b =
 
 -- | TODOs: env need includes LanguageSpace and Prefererence
 -- 1.  Language Space will be expanded as required .
-undercutting :: LanguageSpace -> Argumentation -> Argumentation -> Bool 
+undercutting :: Language -> Argumentation -> Argumentation -> Bool 
 undercutting ls a b = 
     let 
         concA = argConc a 
         negNameTRB = neg <$> retriveRuleFromAnon (topRule b) ls 
     in concA `elem` negNameTRB
 
-defeats :: LanguageSpace -> PreferrenceSpace -> Argumentation -> Argumentation  -> Bool 
+defeats :: Language -> PreferrenceSpace -> Argumentation -> Argumentation  -> Bool 
 defeats ls ps a b = 
     let 
         isRebutting = a `rebutting` b 

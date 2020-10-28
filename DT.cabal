@@ -34,6 +34,7 @@ library
       LAParser
       Lib
       MetaDefinition
+      BC
   other-modules:
       Paths_DT
   hs-source-dirs:

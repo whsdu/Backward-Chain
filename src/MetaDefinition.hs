@@ -1,5 +1,6 @@
 module MetaDefinition where 
 
+import Data.List (group, sort)
 
 type Name = String 
 
@@ -20,6 +21,8 @@ class (Eq a) => Negation a where
     negation :: a -> a -> Bool 
     negation a1 a2 = neg a1 == a2
 
+rmdups :: (Ord a) => [a] -> [a]
+rmdups = map head . group . sort
 
 -- | This class is not necessary due to the nature of type Literal 
 -- ** Atom is actually indistinguishable from Rule !!!

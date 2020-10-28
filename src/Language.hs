@@ -1,14 +1,14 @@
 {-# LANGUAGE GADTs #-}
 module Language where
 
-import           MetaDefinition  (Imp (..), Name, Negation (..))
+import           MetaDefinition  (Imp (..), Name, Negation (..), rmdups)
 import qualified Data.HashMap.Strict as Map
 import Control.Monad (guard)
 data Literal where
     Atom :: Name -> Literal
     Rule :: Name -> [Literal] -> Imp -> Literal -> Literal
 
-type LanguageSpace = [Literal]
+type Language = [Literal]
 type LanguageMap = Map.HashMap Name Literal 
 
 -- | literal is function 'Name' , introduced in last line of page 2.
@@ -40,6 +40,9 @@ instance Show Literal where
 
 instance Eq Literal where
     (==) l1 l2 = literal l1 == literal l2
+
+instance Ord Literal where 
+    compare l1 l2 = compare (literal l1) (literal l2 )
 
 -- | By default : negation a1 a2 = neg a1 == a2
 instance Negation Literal where
@@ -102,17 +105,28 @@ retriveRuleFromAnon ar (l:ls)=
 -- > [t,r2: ->t,c,r1: ->c,b,r7: c t=>b]
 -- > parsBasicArgument al demoArgumentNames
 -- > [A3 :A2 A1=>b,A2 :->c,A1 :->t]
-subBodys :: LanguageSpace -> Literal -> LanguageSpace
-subBodys ls l = accBodys [l] ls [] [] 
+subBodys :: Language -> Literal -> Language
+subBodys ls l = rmdups $ accBodys [l] ls [] [] 
     where 
         accBodys [] _ _ acc = acc 
         accBodys (ll:ls) lSpace seen acc = 
             if 
                 ll `elem` seen then accBodys ls lSpace seen acc 
                 else
-                    let tmpR = [ r | r <-lSpace , ruleHead r == ll ]
+                    let tmpR = [ r | r <-lSpace , ruleHead r == ll || r == ll]
                         tmpLit = concat (ruleBody <$> tmpR) ++ ls 
                     in accBodys tmpLit lSpace (ll : seen) (tmpR ++ acc)
+
+ruleAsHead :: Language -> Literal -> [Literal]
+ruleAsHead  language r =  
+    auxiFunc r language []
+        where 
+            auxiFunc _ [] acc = acc 
+            auxiFunc (Atom _) _ _ = []
+            auxiFunc r@(Rule n _ _ _) (l:ls) acc = 
+                if n == (literal . ruleHead $ l)
+                    then auxiFunc r ls (l:acc)
+                    else auxiFunc r ls acc 
 
 
 closure :: [Literal] -> [Literal]
@@ -121,7 +135,6 @@ closure = undefined
 -- | Once dataset has been converted to Landspace
 -- It would be not possible to has rules with no rule body. 
 validLanguageSpace 
-    :: LanguageSpace 
-    -> Either LanguageSpace LanguageSpace 
+    :: Language 
+    -> Either Language Language 
 validLanguageSpace = undefined 
-
