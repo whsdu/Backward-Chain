@@ -86,7 +86,7 @@ insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
 
 
 
-readTestFile :: IO [Knowledge]
+readTestFile :: IO KnowledgeSpace
 readTestFile = do
     handle <- openFile (testPath ++ testFile) ReadMode
     contents <- hGetContents handle 
