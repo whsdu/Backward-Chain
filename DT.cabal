@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: f481a75313fa3fcce5f2430061b889eb8c3fb68a310ec87459eb42b7b1dc4349
 
 name:           DT
 version:        0.1.0.0
@@ -27,22 +25,27 @@ source-repository head
 
 library
   exposed-modules:
+      Algorithm.BC
+      App
       Arena
-      Argumentation
-      BC
-      FileParser
-      Language
-      LAParser
+      Env
       Lib
-      MetaDefinition
-      BC
+      Parser.FileParser
+      Parser.LanguageParser
+      Space.Argumentation
+      Space.Language
+      Space.Meta
+      Utility.Argumentation
+      Utility.Language
   other-modules:
       Paths_DT
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , mtl
     , split
+    , transformers
     , unordered-containers
   default-language: Haskell2010
 

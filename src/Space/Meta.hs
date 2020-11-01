@@ -1,4 +1,4 @@
-module MetaDefinition where 
+module Space.Meta where 
 
 import Data.List (group, sort)
 

@@ -1,10 +1,12 @@
-module FileParser where 
+module Parser.FileParser where 
 
 import System.IO 
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
-import Language (Literal (..), Language , LanguageMap)
-import MetaDefinition 
+
+import qualified Space.Language as L (Literal (..), Language , LanguageMap)
+import qualified Space.Meta as M 
+
 
 data Knowledge = Knowledge 
     { ruleName :: String
@@ -33,7 +35,7 @@ parseWord w =
         [conclusionName,preferName] = splitOn "," conC
     in Knowledge ruleName premisesName impName conclusionName preferName
 
-k2l :: KnowledgeSpace -> LanguageMap 
+k2l :: KnowledgeSpace -> L.LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty
     where 
         constructLS (k:ks) lsAcc = 
@@ -47,7 +49,7 @@ k2l knowledges = constructLS knowledges Map.empty
             in constructLS ks updateRuleAcc
         constructLS [] lsAcc  = lsAcc
 
-insertAtomsToLanguageSpace :: String -> [String] -> LanguageMap -> (LanguageMap, [Literal], Literal)
+insertAtomsToLanguageSpace :: String -> [String] -> L.LanguageMap -> (L.LanguageMap, L.Language, L.Literal)
 insertAtomsToLanguageSpace concName priNames ls = 
     let 
         (accPrim, primLiterals) = foldr insertOneAtom (ls,[]) priNames 
@@ -57,7 +59,7 @@ insertAtomsToLanguageSpace concName priNames ls =
                     case Map.lookup n ll of 
                         Just b -> (ll, b:lbs)
                         Nothing -> 
-                            let newl = Atom n 
+                            let newl = L.Atom n 
                             in (Map.insert n newl ll, newl:lbs)
 
 -- | TODOs: 
@@ -67,21 +69,21 @@ insertAtomsToLanguageSpace concName priNames ls =
 insertRuleToLanguageSpace 
     :: String
     -> String 
-    -> [Literal]
-    -> Literal  
-    -> LanguageMap 
-    -> LanguageMap
+    -> L.Language
+    -> L.Literal  
+    -> L.LanguageMap 
+    -> L.LanguageMap
 insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
     let 
         ruleBody = Map.lookup ruleName lspace 
-        impSym = if imp == "->" then S else D 
+        impSym = if imp == "->" then M.S else M.D 
     in  case ruleBody of 
         Just b -> case b of 
-                    Atom _ -> undefined 
-                    Rule {} -> undefined 
+                    L.Atom _ -> undefined 
+                    L.Rule {} -> undefined 
         Nothing -> 
             let 
-                ruleLiteral = Rule ruleName primies impSym conclusion 
+                ruleLiteral = L.Rule ruleName primies impSym conclusion 
             in Map.insert ruleName ruleLiteral lspace 
 
 
