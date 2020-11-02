@@ -29,6 +29,7 @@ library:
   - transformers
   - split
   - unordered-containers
+  - containers
 
 executables:
   DT-exe:

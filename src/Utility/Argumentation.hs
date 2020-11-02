@@ -33,8 +33,6 @@ topRule (A.Argumentation _ bs i c) =
         anonyRule = L.Rule "" ruleBody i c
     in L.AnonyRule anonyRule
 
-
-
 class Monad m => ArgumentContext m where
     argUndercutting :: A.Argumentation -> A.Argumentation -> m Bool
     argRebutting :: A.Argumentation -> A.Argumentation -> m Bool

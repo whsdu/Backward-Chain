@@ -10,6 +10,7 @@ module Space.Language
     , body
     , imp
     , conC
+    , eqLang
     )where
 
 import Space.Meta (Name, Imp(..), Negation(..))
@@ -45,6 +46,11 @@ conC :: Literal -> Literal
 conC (Rule _ _ _ h) = h
 conC a@(Atom _)     = a
 
+eqLang :: Language -> Language -> Bool 
+eqLang al bl = isElemB && isElemA 
+    where 
+        isElemB = and [ a `elem` bl | a <- al ]
+        isElemA = and [ b `elem` al | b <- bl ]
 instance Show Literal where
     show (Rule n b i h) = n ++ ": " ++ bs ++ im ++ head
         where
@@ -62,18 +68,18 @@ instance Ord Literal where
 -- | By default : negation a1 a2 = neg a1 == a2
 instance Negation Literal where
     neg (Rule n b i h)
-        |  GHC.head n == '_' =
+        |  GHC.head n == '!' =
             let nLiteral = tail n 
             in Rule nLiteral b i h
         | otherwise =
-            let nLiteral = '_' : n
+            let nLiteral = '!' : n
             in Rule nLiteral b i h
     neg (Atom n)
-        |  GHC.head n  == '_' =
+        |  GHC.head n  == '!' =
             let nLiteral = tail n
             in Atom nLiteral
         | otherwise =
-            let nLiteral = '_' : n
+            let nLiteral = '!' : n
             in Atom nLiteral
 
 newtype AnonyRule = AnonyRule {unanonyRule :: Literal}

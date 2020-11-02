@@ -28,6 +28,9 @@ r6 = L.Rule "r6" [a] M.D  (M.neg b)
 -- r6 = Rule "r6" [] D  c      -- r6:=>c
 r7 = L.Rule "r7" [c,t] M.D  b
 
+lr1 = L.Rule "lr1" [lr2] M.D lr1 
+lr2 = L.Rule "lr2" [lr1] M.D lr2
+
 atoms :: [L.Literal]
 atoms = [a,b,c,t,m]
 

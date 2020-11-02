@@ -14,6 +14,7 @@ instance Show Imp where
 instance Eq Imp where 
     (==) S S = True 
     (==) D D = True
+    (==) N N = True 
     (==) _ _ = False
 
 class (Eq a) => Negation a where 

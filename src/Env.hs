@@ -6,6 +6,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 
 module Env where 
@@ -25,11 +26,11 @@ data Env = Env
 
 instance Show Env where 
     show env = 
-        "LanguageSpace: " ++ show (take 10 (langSpace env)) ++ "\n" ++
-        "Strict Rules: " ++ show (take 10 (getStrictRules $ sRuleSpace env)) ++ "\n" ++ 
-        "Defeasible Rules: " ++ show (take 10 (getDefeasibleRules $ dRuleSpace env)) ++ "\n" ++ 
-        "ArgumentationSpace: " ++ show (take 10 (langSpace env)) ++ "\n" ++ 
-        "Preferrence Space: " ++ show (take 10 (langSpace env)) 
+        "LanguageSpace: " ++ show (langSpace env) ++ "\n" ++
+        "Strict Rules: " ++ show (getStrictRules $ sRuleSpace env) ++ "\n" ++ 
+        "Defeasible Rules: " ++ show (getDefeasibleRules $ dRuleSpace env) ++ "\n" ++ 
+        "ArgumentationSpace: " ++ show (arguSpace env) ++ "\n" ++ 
+        "Preferrence Space: " ++ show (prefSpace env) 
 
 class Has field env where 
     obtain :: env -> field 
@@ -42,6 +43,8 @@ instance Has StrictRules Env where obtain = sRuleSpace
 instance Has DefeasibleRules Env where obtain = dRuleSpace
 instance Has ArgumentationSpace Env where obtain = arguSpace 
 instance Has PreferenceSpace Env where obtain = prefSpace
+
+type UseRuleOnly env = (Has StrictRules env, Has DefeasibleRules env)
 
 newtype App a = App 
     { unApp :: ReaderT Env IO a 
