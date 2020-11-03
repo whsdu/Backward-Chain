@@ -5,7 +5,7 @@ import System.IO
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
 
-import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..), name,body,imp,conC)
+import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..),Preference(..), PreferenceSpace, name,body,imp,conC)
 import qualified Space.Meta as M 
 import Env 
 
@@ -25,13 +25,23 @@ testPath = "./Examples/Teams/"
 trickyPath = "./Examples/tricky/"
 testFile :: String 
 testFile = "b2.txt"
+largeFile = "b7.txt"
+devFile = "b3.txt"
 testTricky= "tricky_rules.txt"
 
 readTestFile :: IO KnowledgeSpace
 readTestFile = stringToKnowledge (testPath ++ testFile)
 
+readHardFile :: IO KnowledgeSpace
+readHardFile = stringToKnowledge (testPath ++ largeFile)
+
+readDevFile :: IO KnowledgeSpace
+readDevFile = stringToKnowledge (testPath ++ devFile)
+
 readTrickyFile :: IO KnowledgeSpace
 readTrickyFile = stringToKnowledge (trickyPath ++ testTricky)
+
+
 ----------------------
 
 stringToKnowledge :: FilePath -> IO KnowledgeSpace
@@ -92,6 +102,7 @@ chainingRule knowledgeMap =
                                 in fromMaybe l r 
 
 
+
 mkEnv :: L.LanguageMap -> Env 
 mkEnv lm = 
     let 
@@ -99,7 +110,17 @@ mkEnv lm =
         strictRule = L.StrictRules [ l | l <- literalList, L.imp l == M.S]
         defeasibleRule = L.DefeasibleRules [ l | l <- literalList, L.imp l == M.D]
         atoms = M.rmdups [ l | l <- concat (L.body <$> literalList) ++ (L.conC <$> literalList), L.imp l == M.N]
-    in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] [] 
+        demoPrefer = makeDemoPrefer lm 
+    in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] demoPrefer
+    where 
+        makeDemoPrefer :: L.LanguageMap -> L.PreferenceSpace
+        makeDemoPrefer lm =
+            let 
+                atom = L.conC . snd <$> Map.toList lm 
+                posAtom = [a | a <- atom, not ('!' `elem` L.name a)] 
+                negAtom = M.neg <$> posAtom 
+            in zipWith L.Preference posAtom negAtom 
+
 
 k2l :: KnowledgeSpace -> L.LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty
@@ -148,3 +169,6 @@ insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
 -- 1. handle with preference 
 -- 2. read papers see the details of algorithm 
 -- 3. summarize the conclusion 
+
+mkPreferenceSpace :: KnowledgeSpace -> L.LanguageMap -> L.PreferenceSpace 
+mkPreferenceSpace = undefined 

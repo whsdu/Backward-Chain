@@ -13,24 +13,24 @@ module Env where
 
 import Control.Monad.Reader 
 
-import Space.Language (Language,StrictRules(..),DefeasibleRules(..))
-import Space.Argumentation (ArgumentationSpace, PreferenceSpace) 
+import Space.Language (Language,StrictRules(..),DefeasibleRules(..), PreferenceSpace)
+import Space.Argumentation (ArgumentationSpace ) 
 
 data Env = Env 
-    { langSpace :: Language 
-    , sRuleSpace :: StrictRules
-    , dRuleSpace :: DefeasibleRules
-    , arguSpace :: ArgumentationSpace
-    , prefSpace :: PreferenceSpace 
+    { envLangSpace :: Language 
+    , envSRuleSpace :: StrictRules
+    , envDRuleSpace :: DefeasibleRules
+    , envArguSpace :: ArgumentationSpace
+    , envPrefSpace :: PreferenceSpace 
     } 
 
 instance Show Env where 
     show env = 
-        "LanguageSpace: " ++ show (langSpace env) ++ "\n" ++
-        "Strict Rules: " ++ show (getStrictRules $ sRuleSpace env) ++ "\n" ++ 
-        "Defeasible Rules: " ++ show (getDefeasibleRules $ dRuleSpace env) ++ "\n" ++ 
-        "ArgumentationSpace: " ++ show (arguSpace env) ++ "\n" ++ 
-        "Preferrence Space: " ++ show (prefSpace env) 
+        "LanguageSpace: " ++ show (envLangSpace env) ++ "\n" ++
+        "Strict Rules: " ++ show (getStrictRules $ envSRuleSpace env) ++ "\n" ++ 
+        "Defeasible Rules: " ++ show (getDefeasibleRules $ envDRuleSpace env) ++ "\n" ++ 
+        "ArgumentationSpace: " ++ show (envArguSpace env) ++ "\n" ++ 
+        "Preferrence Space: " ++ show (envPrefSpace env) 
 
 class Has field env where 
     obtain :: env -> field 
@@ -38,11 +38,11 @@ class Has field env where
 grab :: forall field env m . (MonadReader env m , Has field env) => m field 
 grab = asks $ obtain @field 
 
-instance Has Language Env where obtain = langSpace 
-instance Has StrictRules Env where obtain = sRuleSpace
-instance Has DefeasibleRules Env where obtain = dRuleSpace
-instance Has ArgumentationSpace Env where obtain = arguSpace 
-instance Has PreferenceSpace Env where obtain = prefSpace
+instance Has Language Env where obtain = envLangSpace 
+instance Has StrictRules Env where obtain = envSRuleSpace
+instance Has DefeasibleRules Env where obtain = envDRuleSpace
+instance Has ArgumentationSpace Env where obtain = envArguSpace 
+instance Has PreferenceSpace Env where obtain = envPrefSpace
 
 type UseRuleOnly env = (Has StrictRules env, Has DefeasibleRules env)
 

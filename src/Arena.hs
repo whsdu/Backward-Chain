@@ -66,8 +66,9 @@ demoPrefer2 = A.Prefer (demoArguments !! 2) (demoArguments !! 1)
 demoPreferSpace :: [A.Preference]
 demoPreferSpace = [demoPrefer1, demoPrefer2]
 
+
 paperEnv :: Env
-paperEnv = Env demoLanguage (L.StrictRules [r1,r2,r3,r4]) (L.DefeasibleRules [r5,r6,r7]) demoArguments demoPreferSpace
+paperEnv = Env demoLanguage (L.StrictRules [r1,r2,r3,r4]) (L.DefeasibleRules [r5,r6,r7]) demoArguments []
 
 a1,a2,a3,a4,a5,a6,a7 :: A.Argumentation
 a7 = head demoArguments

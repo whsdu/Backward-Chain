@@ -6,6 +6,8 @@ module Space.Language
     , AnonyRule(..)
     , StrictRules (..)
     , DefeasibleRules(..)
+    , Preference(..)
+    , PreferenceSpace
     , name 
     , body
     , imp
@@ -21,6 +23,11 @@ import qualified GHC.List as GHC (head)
 data Literal where
     Atom :: Name -> Literal
     Rule :: Name -> [Literal] -> Imp -> Literal -> Literal
+
+data Preference where 
+    Preference :: Literal -> Literal -> Preference
+
+type PreferenceSpace = [Preference]
 
 type Language = [Literal]
 type LanguageMap = Map.HashMap Name Literal 
@@ -96,3 +103,12 @@ instance Eq AnonyRule where
 
 instance Show AnonyRule where
     show ar = show $ unanonyRule ar 
+
+instance Show Preference where
+    show (Preference a1 a2) = name a1 ++ " > " ++ name a2
+
+instance Eq Preference where
+    (==) (Preference pr11 pr12) (Preference pr21 pr22)
+        | pr11 /= pr21 = False
+        | pr12 /= pr22 = False
+        | otherwise = True

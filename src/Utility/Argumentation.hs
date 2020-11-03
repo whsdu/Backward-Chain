@@ -36,14 +36,14 @@ topRule (A.Argumentation _ bs i c) =
 class Monad m => ArgumentContext m where
     argUndercutting :: A.Argumentation -> A.Argumentation -> m Bool
     argRebutting :: A.Argumentation -> A.Argumentation -> m Bool
-    argPrefer :: A.Argumentation -> A.Argumentation -> m Bool
-    argDefeat :: A.Argumentation -> A.Argumentation -> m Bool
+    -- argPrefer :: A.Argumentation -> A.Argumentation -> m Bool
+    -- argDefeat :: A.Argumentation -> A.Argumentation -> m Bool
 
 instance ArgumentContext App where
     argUndercutting = undercutting
     argRebutting = rebutting
-    argPrefer = preferable
-    argDefeat = defeats
+    -- argPrefer = preferable
+    -- argDefeat = defeats
 
 rebutting :: MonadIO m => A.Argumentation -> A.Argumentation -> m Bool
 rebutting a b =
@@ -67,26 +67,26 @@ undercutting a b = do
         negNameTRB = M.neg <$> rules
     pure $ concA `elem` negNameTRB
 
-preferable ::
-    ( MonadReader env m
-    , Has A.PreferenceSpace env
-    , MonadIO m
-    )
-    => A.Argumentation -> A.Argumentation -> m Bool
-preferable a1 a2 = do
-    pf <- grab @A.PreferenceSpace
-    let
-        candiPrefer = A.Prefer a1 a2
-    pure $ or $ (==) candiPrefer <$> pf
+-- preferable ::
+--     ( MonadReader env m
+--     , Has A.PreferenceSpace env
+--     , MonadIO m
+--     )
+--     => A.Argumentation -> A.Argumentation -> m Bool
+-- preferable a1 a2 = do
+--     pf <- grab @A.PreferenceSpace
+--     let
+--         candiPrefer = A.Prefer a1 a2
+--     pure $ or $ (==) candiPrefer <$> pf
 
-defeats ::
-    ( MonadReader env m
-    , Has A.PreferenceSpace env
-    , UL.LanguageContext m
-    , MonadIO m)
-    => A.Argumentation -> A.Argumentation -> m Bool
-defeats a b = do
-    isUndercutting <- undercutting a b
-    isPreferThan <- preferable a b
-    isRebutting <- rebutting a b
-    pure $ (isUndercutting || isRebutting) && isPreferThan
+-- defeats ::
+--     ( MonadReader env m
+--     , Has A.PreferenceSpace env
+--     , UL.LanguageContext m
+--     , MonadIO m)
+--     => A.Argumentation -> A.Argumentation -> m Bool
+-- defeats a b = do
+--     isUndercutting <- undercutting a b
+--     isPreferThan <- preferable a b
+--     isRebutting <- rebutting a b
+--     pure $ (isUndercutting || isRebutting) && isPreferThan
