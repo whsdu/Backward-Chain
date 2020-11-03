@@ -117,7 +117,7 @@ mkEnv lm =
         makeDemoPrefer lm =
             let 
                 atom = L.conC . snd <$> Map.toList lm 
-                posAtom = [a | a <- atom, not ('!' `elem` L.name a)] 
+                posAtom = [a | a <- atom, '!' `notElem` L.name a] 
                 negAtom = M.neg <$> posAtom 
             in zipWith L.Preference posAtom negAtom 
 

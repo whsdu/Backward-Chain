@@ -4,12 +4,16 @@ module Utility.Language
     ( LanguageContext (..)
     , isApplicable
     , isConsistent
+    , isRebutting
+    , isUndercutting
+    , isAttack
+    , isPreferable
     )where
 
 import           Control.Monad.Reader
 import           Env                  (App, Has (..), UseRuleOnly, grab)
 import qualified Space.Language       as L
-import qualified Space.Meta           as M (Negation(..), rmdups)
+import qualified Space.Meta           as M (Negation(..), Imp(..), rmdups)
 
 
 -- |A strict rule is applicable with respect to a set of literals:
@@ -28,6 +32,29 @@ isConsistent literals = not . or $ auxiFunc literals []
         auxiFunc [_] acc = acc 
         auxiFunc (l:ls) acc = auxiFunc ls $ (M.negation l <$> ls)  ++ acc 
 
+isRebutting :: L.Literal -> L.Literal -> Bool
+isRebutting a b =
+    let
+        concA = L.conC a 
+        concB = L.conC b
+        isRebutting = M.negation concA concB
+    in 
+        isRebutting 
+        && 
+        M.D == L.imp b 
+            
+isUndercutting :: L.Literal -> L.Literal ->  Bool
+isUndercutting a b = 
+    let 
+        concA = L.conC a 
+    in M.negation concA b
+
+isAttack :: L.Literal -> L.Literal -> Bool 
+isAttack a b = a `isRebutting` b || a `isUndercutting` b
+
+isPreferable :: L.PreferenceSpace -> L.Literal -> L.Literal ->  Bool 
+isPreferable preferSpace la lb = L.Preference la lb `elem` preferSpace
+
 class Monad m => LanguageContext m where
     langMatchRuleFromAnony :: L.AnonyRule -> m L.Language
     langRuleAsConc :: L.Literal -> m L.Language
@@ -43,6 +70,9 @@ instance LanguageContext App where
     langClosure = closure
     langAL = rulesForLiteral
     langASG = rsForLiteral
+
+
+
 
 -- | TODOs: env needed
 -- work together with Argumentation.undercutting
@@ -62,6 +92,8 @@ retriveRuleFromAnony ar = do
                         then [r]
                         else auxi ls ar
                 L.Atom{} -> auxi ls ar
+
+-- | This is the same as described in pseudocode, but different from Definition 5    
 
 ruleAsConc :: 
     ( MonadReader env m 
@@ -103,6 +135,7 @@ closure p = do
     pure closurePS
     
 -- | find all Rules whose conclusion (head) are the given literal .     
+--  This actually compute the support path of a given `Literal` .
 -- Function AL is running on Argumentation space. 
 -- This funciton is running on Language Space.
 rulesForLiteral ::
@@ -144,6 +177,10 @@ rsForLiteral l = do
                 if all == endRL 
                     then pure all
                     else asg all all 
+
+
+
+
 -- 
 -- | Once dataset has been converted to Landspace
 -- It would be not possible to has rules with no rule body.

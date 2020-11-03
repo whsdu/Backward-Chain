@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 module Algorithm.BC where
 
 import Control.Monad.Reader 
@@ -10,31 +12,37 @@ import qualified Utility.Argumentation as AU
 import qualified Utility.Language as LU
 import Env 
 
+-- | Rely on Language Context function langAL      
+-- `L.Literal` is the query.          
+-- `L.Language` is the `A` ***(argumentation set)*** described in paper.
+funcAL ::
+    ( LU.LanguageContext m 
+    ) => L.Literal -> m L.Language
+funcAL = LU.langAL
 
--- rulesForLiteral :: 
---     ( MonadReader env m 
---     , Has env L.Language
---     , MonadIO m 
---     ) => L.Language -> [M.Name] -> Literal -> ArgumentationSpace
--- rulesForLiteral language argNames l =
---     let
---         prod = subBodys language l
---     in parsBasicArgument prod argNames
--- 
+-- | Rely on Language Context function langASG
+-- `L.Literal` is the query.          
+-- `L.Language` is the `A` ***(argumentation set)*** described in paper.
+funcASG :: 
+    ( LU.LanguageContext m 
+    ) => L.Literal -> m L.Language
+funcASG = LU.langASG
 
--- funcASG :: [Literal] -> Literal -> [Literal]
--- funcASG language l =
---     let
---         al = subBodys language l
---     in computeASG language al al
---     where
---         computeASG lag initAL endAL =
---             let
---                 attackConc = rmdups . concat $ subBodys language . neg . L.conC <$> initAL
---                 negRuleAsHead = concat $ ruleAsConc language . neg <$> attackConc ++ initAL
---                 attack = rmdups . concat $ subBodys language <$> negRuleAsHead ++ attackConc ++ initAL
---             in
---                 if attack == endAL
---                     then attack
---                     else computeASG lag attack attack
--- 
+-- | This is actually finished the def-generate and as-filter in one go.     
+-- This function also relies on `LanguageContexg` function to get access to Preference.  
+defGen :: 
+    ( MonadReader env m
+    , Has L.PreferenceSpace env 
+    , LU.LanguageContext m 
+    , MonadIO m ) => L.Language -> m (L.Language, L.PreferenceSpace)
+defGen language = do
+    perfs <- grab @L.PreferenceSpace 
+    let
+        isPreferable = LU.isPreferable perfs 
+        def = do 
+            la <- language 
+            lb <- language 
+            guard $ la `LU.isAttack` lb 
+            guard $ la `isPreferable` lb 
+            pure $ L.Preference la lb 
+    pure  ( language, def )

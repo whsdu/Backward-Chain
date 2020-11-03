@@ -29,6 +29,7 @@ library
       App
       Arena
       Env
+      GRI.GRI
       Lib
       Parser.FileParser
       Parser.LanguageParser
