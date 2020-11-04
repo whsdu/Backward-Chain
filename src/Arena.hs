@@ -116,15 +116,10 @@ readTrickyFile :: IO PF.KnowledgeSpace
 readTrickyFile = PF.stringToKnowledge (trickyPath ++ testTricky)
 
 demoEnv :: FilePath -> IO Env
-demoEnv filePath = do 
-    k <- PF.stringToKnowledge filePath
-    let 
-        l = PF.k2l k 
-        r = PF.chainingRule l 
-    pure $ PF.mkEnv r 
+demoEnv = PF.parseEnv
 
 demoLiteralMap :: Env -> Map.HashMap M.Name L.Literal
-demoLiteralMap env = 
-    let 
-        language = envLangSpace env 
-    in Map.fromList $ zip (L.name <$> language ) language
+demoLiteralMap = PF.parseLiteralMap
+
+getQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
+getQueryLiteral = PF.parseQueryLiteral

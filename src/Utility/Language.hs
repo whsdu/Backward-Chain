@@ -74,8 +74,10 @@ instance LanguageContext App where
 
 
 
--- | TODOs: env needed
--- work together with Argumentation.undercutting
+-- |  Work for Argumentation.undercutting : O(n)     
+-- Toprule function of Argumenation space returns rule with no name (Anonymonus Rule)     
+-- There fore we need to find out if this rule is a member of our `Language`    
+-- Depends on `Language` of the `env`. 
 retriveRuleFromAnony::
     ( MonadReader env m
     , Has L.Language env
@@ -93,8 +95,9 @@ retriveRuleFromAnony ar = do
                         else auxi ls ar
                 L.Atom{} -> auxi ls ar
 
--- | This is the same as described in pseudocode, but different from Definition 5    
-
+-- | TR functions. O(n)    
+-- Given a rule `r`::`L.Literal`,   
+-- Returns all  `rules`::`L.Language` that conclude `r`.
 ruleAsConc :: 
     ( MonadReader env m 
     , UseRuleOnly env
@@ -113,20 +116,18 @@ ruleAsConc r = do
                     then auxiFunc r ls (l:acc)
                     else auxiFunc r ls acc
 
--- | TODOs: 
--- 1. complexity of these read monad 
--- 2. analysis the necessity of using these monad contraint, check haskell report . 
--- 3. all corresponding examples
-
--- These are functions that relies on env (Language)
+-- | Construct closure of a set of Literal `p`. O(n^2)    
+-- Based on inital `p`     
+-- Find all `rules` isApplicable on `p` and get corresponding conclusion `Cs`    
+-- Add `rules`, `Cs` in `p` to get `newP`     
+-- run closure `newP` again.     
+-- Stop when `p` == `newP`    
 closure :: 
     ( MonadReader env m
-    , Has L.Language env 
-    , Has L.StrictRules env 
+    , UseRuleOnly env 
     , MonadIO m
     )=> [L.Literal] -> m [L.Literal]
 closure p = do 
-    l <- grab @L.Language 
     sRules <- L.getStrictRules <$> grab @L.StrictRules
     let 
         heads = L.conC <$> sRules 
@@ -134,10 +135,14 @@ closure p = do
         closurePS = M.rmdups $ heads ++ bodys ++ p 
     pure closurePS
     
--- | find all Rules whose conclusion (head) are the given literal .     
---  This actually compute the support path of a given `Literal` .
--- Function AL is running on Argumentation space. 
--- This funciton is running on Language Space.
+-- | Recursively find all Rules whose conclusion (head) are the given literal. O(n^2)\\
+-- And find all rules whos conclusion are bodys of these rules found above.\\\
+-- And continue above step.     
+-- This actually compute the support path of a given `Literal` .\\
+-- It is different from GRI, because support path in GRI only compute support path for rule.\\\
+-- It is different from `Definition 5`, because `Definition 5` has no recursive operation. \\
+-- It is the same as descrbied in the pseudo-code of `AL`.\\
+-- This is the core of implemenation of `BC.funcAL`.
 rulesForLiteral ::
     ( MonadReader env m
     , UseRuleOnly env 
@@ -157,6 +162,11 @@ rulesForLiteral l = do
                         tmpLit = concat (L.body <$> tmpR) ++ ls
                     in accBodys tmpLit lSpace (ll : seen) (tmpR ++ acc)
 
+-- | Line 1-16 of ASG  
+-- `rebutting` relies on `AL` to get all support path \\
+-- `undercutting` relies on `neg` of previous result to get all negative connected rules.\\
+-- `OneMoreStepAL` relies on `AL` to get all connected rules.\\
+-- Sum these together and repeat again, untill no more rule are included.
 rsForLiteral :: 
             ( MonadReader env m 
             , UseRuleOnly env 
@@ -164,9 +174,9 @@ rsForLiteral ::
             ) => L.Literal -> m L.Language
 rsForLiteral l = do 
     rules4l <- rulesForLiteral l 
-    asg rules4l rules4l 
+    asg rules4l 
     where 
-        asg initRL endRL = do 
+        asg initRL = do 
                 rebutting <- M.rmdups . concat <$> forM ( M.neg . L.conC <$> initRL) rulesForLiteral
                 undercutting <- concat <$> forM (M.neg <$>  rebutting ++ initRL) ruleAsConc
                 oneMoreStepAL <- M.rmdups . concat 
@@ -174,14 +184,10 @@ rsForLiteral l = do
                                     (initRL ++ rebutting ++ undercutting) 
                                     rulesForLiteral
                 let all = M.rmdups $ initRL ++ oneMoreStepAL ++ undercutting ++ rebutting
-                if all == endRL 
+                if all == initRL 
                     then pure all
-                    else asg all all 
+                    else asg all 
 
-
-
-
--- 
 -- | Once dataset has been converted to Landspace
 -- It would be not possible to has rules with no rule body.
 validLanguageSpace

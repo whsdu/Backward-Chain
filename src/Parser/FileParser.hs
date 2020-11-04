@@ -1,10 +1,10 @@
 module Parser.FileParser where 
 
-import Data.Maybe (fromMaybe)
 import Control.Monad(guard)
 import System.IO 
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
+import Data.Maybe(fromJust, fromMaybe)
 
 import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..),Preference(..), PreferenceSpace, name,body,imp,conC)
 import qualified Space.Meta as M
@@ -14,7 +14,7 @@ import Env
 
 data Knowledge = Knowledge 
     { ruleName :: String
-    , primisesName :: [String]
+    , premisesName :: [String]
     , impName :: String
     , conclusionName :: String
     , preferName :: String 
@@ -23,31 +23,24 @@ data Knowledge = Knowledge
 type KnowledgeSpace = [Knowledge]
 
 
+parseEnv :: FilePath -> IO Env
+parseEnv filePath = do 
+    k <- stringToKnowledge filePath
+    let 
+        l = k2l k 
+        r = chainingRule l 
+    pure $ mkEnv r 
+
+parseLiteralMap :: Env -> Map.HashMap M.Name L.Literal
+parseLiteralMap env = 
+    let 
+        language = envLangSpace env 
+    in Map.fromList $ zip (L.name <$> language ) language
+
+parseQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
+parseQueryLiteral qName lm = fromJust $ Map.lookup qName lm 
+
 ----------------------
-
-stringToKnowledge :: FilePath -> IO KnowledgeSpace
-stringToKnowledge filePath = do
-    handle <- openFile filePath  ReadMode
-    contents <- hGetContents handle 
-    pure $ parseWord <$> words contents 
-
--- stringToPreferece :: FilePath -> IO [(M.Name,M.Name)]
--- stringToPreferece filePath = do 
---     handle <- openFile filePath  ReadMode
---     contents <- hGetContents handle 
---     let pPairs = getPreferPair $ parseWord <$> words contents 
---         newPairs = do 
---             a <- pPairs
---             b <- pPairs 
---             guard $ snd a == "1"
---             guard $ snd b == "0"
---             pure $ ((fst a), (fst b))
---     pure $ newPairs
---     where 
---         getPreferPair :: KnowledgeSpace -> [(String,String)]
---         getPreferPair ks = (\k -> (ruleName k, preferName k)) <$> ks 
-
-
 parseWord :: String -> Knowledge
 parseWord w = 
     let 
@@ -59,6 +52,50 @@ parseWord w =
         premisesName = splitOn "," premies 
         [conclusionName,preferName] = splitOn "," conC
     in Knowledge ruleName premisesName impName conclusionName preferName
+
+stringToKnowledge :: FilePath -> IO KnowledgeSpace
+stringToKnowledge filePath = do
+    handle <- openFile filePath  ReadMode
+    contents <- hGetContents handle 
+    pure $ parseWord <$> words contents 
+
+k2l :: KnowledgeSpace -> L.LanguageMap 
+k2l knowledges = constructLS knowledges Map.empty
+    where 
+        constructLS (k:ks) lsAcc = 
+            let 
+                concName = conclusionName k 
+                priNames = premisesName k 
+                rName = ruleName k 
+                iName = impName k 
+                (updateAtomAcc,primLiterals,concLiteral) = insertAtomsToLanguageSpace concName  priNames lsAcc
+                updateRuleAcc = insertRuleToLanguageSpace rName iName primLiterals concLiteral updateAtomAcc
+            in constructLS ks updateRuleAcc
+        constructLS [] lsAcc  = lsAcc
+        insertAtomsToLanguageSpace :: String -> [String] -> L.LanguageMap -> (L.LanguageMap, L.Language, L.Literal)
+        insertAtomsToLanguageSpace concName priNames ls = 
+            let 
+                (accPrim, primLiterals) = foldr insertOneAtom (ls,[]) priNames 
+                (accConc, concLiterals) = insertOneAtom concName (accPrim,[])
+            in (accConc, primLiterals, head concLiterals)
+            where insertOneAtom n (ll,lbs) = 
+                            case Map.lookup n ll of 
+                                Just b -> (ll, b:lbs)
+                                Nothing -> 
+                                    let newl = L.Atom n 
+                                    in (Map.insert n newl ll, newl:lbs)
+        insertRuleToLanguageSpace 
+            :: String
+            -> String 
+            -> L.Language
+            -> L.Literal  
+            -> L.LanguageMap 
+            -> L.LanguageMap
+        insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
+            let 
+                impSym = if imp == "->" then M.S else M.D 
+                ruleLiteral = L.Rule ruleName primies impSym conclusion 
+            in Map.insert ruleName ruleLiteral lspace 
 
 chainingRule :: L.LanguageMap -> L.LanguageMap 
 chainingRule knowledgeMap = 
@@ -116,60 +153,3 @@ mkEnv lm =
                         guard $ a `LU.isRebutting`b 
                         guard $ head (L.name (L.conC a)) /= '!'
                         pure $ L.Preference a b 
---             let 
---                 atom = L.conC . snd <$> Map.toList lm 
---                 posAtom = [a | a <- atom, '!' `notElem` L.name a] 
---                 negAtom = M.neg <$> posAtom 
---             in zipWith L.Preference posAtom negAtom 
-
-
-k2l :: KnowledgeSpace -> L.LanguageMap 
-k2l knowledges = constructLS knowledges Map.empty
-    where 
-        constructLS (k:ks) lsAcc = 
-            let 
-                concName = conclusionName k 
-                priNames = primisesName k 
-                rName = ruleName k 
-                iName = impName k 
-                (updateAtomAcc,primLiterals,concLiteral) = insertAtomsToLanguageSpace concName  priNames lsAcc
-                updateRuleAcc = insertRuleToLanguageSpace rName iName primLiterals concLiteral updateAtomAcc
-            in constructLS ks updateRuleAcc
-        constructLS [] lsAcc  = lsAcc
-
-insertAtomsToLanguageSpace :: String -> [String] -> L.LanguageMap -> (L.LanguageMap, L.Language, L.Literal)
-insertAtomsToLanguageSpace concName priNames ls = 
-    let 
-        (accPrim, primLiterals) = foldr insertOneAtom (ls,[]) priNames 
-        (accConc, concLiterals) = insertOneAtom concName (accPrim,[])
-    in (accConc, primLiterals, head concLiterals)
-    where insertOneAtom n (ll,lbs) = 
-                    case Map.lookup n ll of 
-                        Just b -> (ll, b:lbs)
-                        Nothing -> 
-                            let newl = L.Atom n 
-                            in (Map.insert n newl ll, newl:lbs)
-
-insertRuleToLanguageSpace 
-    :: String
-    -> String 
-    -> L.Language
-    -> L.Literal  
-    -> L.LanguageMap 
-    -> L.LanguageMap
-insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
-    let 
-        impSym = if imp == "->" then M.S else M.D 
-        ruleLiteral = L.Rule ruleName primies impSym conclusion 
-    in Map.insert ruleName ruleLiteral lspace 
-
-
-
--- | TODOs: 
--- 1. predu-code 
--- 1. handle with preference 
--- 2. read papers see the details of algorithm 
--- 3. summarize the conclusion 
-
-mkPreferenceSpace :: KnowledgeSpace -> L.LanguageMap -> L.PreferenceSpace 
-mkPreferenceSpace = undefined 

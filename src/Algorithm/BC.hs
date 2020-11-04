@@ -31,12 +31,12 @@ funcASG = LU.langASG
 -- | This is actually finished the def-generate and as-filter in one go.     
 -- This function also relies on `LanguageContext` function to get access to Preference.  
 -- The filtration is not being recorded.
-defGen :: 
+funcDefGen :: 
     ( MonadReader env m
     , Has L.PreferenceSpace env 
     , LU.LanguageContext m 
     , MonadIO m ) => L.Language -> m (L.Language, L.PreferenceSpace)
-defGen language = do
+funcDefGen language = do
     perfs <- grab @L.PreferenceSpace 
     let
         isPreferable = LU.isPreferable perfs 
