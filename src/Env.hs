@@ -13,7 +13,7 @@ module Env where
 
 import Control.Monad.Reader 
 
-import Space.Language (Language,StrictRules(..),DefeasibleRules(..), PreferenceSpace, LanguageMap (..))
+import Space.Language (Language,StrictRules(..),DefeasibleRules(..), PreferenceSpace) 
 import Space.Argumentation (ArgumentationSpace ) 
 
 data Env = Env 

@@ -18,9 +18,6 @@ c = L.Atom "c"
 t = L.Atom "t"
 m = L.Atom "m"
 
--- | TODOs
--- class Negation need dependencies information otherwise there always need
--- explicit declariation about the type of function neg
 r1,r2,r3,r4,r5,r6,r7 :: L.Literal
 r1 = L.Rule "r1" [] M.S  c
 r2 = L.Rule "r2" [] M.S  t
@@ -123,3 +120,5 @@ demoLiteralMap = PF.parseLiteralMap
 
 getQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
 getQueryLiteral = PF.parseQueryLiteral
+
+------------ Examples below -------------------------
