@@ -29,7 +29,8 @@ funcASG ::
 funcASG = LU.langASG
 
 -- | This is actually finished the def-generate and as-filter in one go.     
--- This function also relies on `LanguageContexg` function to get access to Preference.  
+-- This function also relies on `LanguageContext` function to get access to Preference.  
+-- The filtration is not being recorded.
 defGen :: 
     ( MonadReader env m
     , Has L.PreferenceSpace env 

@@ -1,12 +1,14 @@
 module Parser.FileParser where 
 
 import Data.Maybe (fromMaybe)
+import Control.Monad(guard)
 import System.IO 
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
 
 import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..),Preference(..), PreferenceSpace, name,body,imp,conC)
-import qualified Space.Meta as M 
+import qualified Space.Meta as M
+import qualified Utility.Language as LU
 import Env 
 
 
@@ -20,27 +22,6 @@ data Knowledge = Knowledge
 
 type KnowledgeSpace = [Knowledge]
 
-testPath :: String 
-testPath = "./Examples/Teams/"
-trickyPath = "./Examples/tricky/"
-testFile :: String 
-testFile = "b2.txt"
-largeFile = "b7.txt"
-devFile = "b3.txt"
-testTricky= "tricky_rules.txt"
-
-readTestFile :: IO KnowledgeSpace
-readTestFile = stringToKnowledge (testPath ++ testFile)
-
-readHardFile :: IO KnowledgeSpace
-readHardFile = stringToKnowledge (testPath ++ largeFile)
-
-readDevFile :: IO KnowledgeSpace
-readDevFile = stringToKnowledge (testPath ++ devFile)
-
-readTrickyFile :: IO KnowledgeSpace
-readTrickyFile = stringToKnowledge (trickyPath ++ testTricky)
-
 
 ----------------------
 
@@ -49,6 +30,23 @@ stringToKnowledge filePath = do
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
     pure $ parseWord <$> words contents 
+
+-- stringToPreferece :: FilePath -> IO [(M.Name,M.Name)]
+-- stringToPreferece filePath = do 
+--     handle <- openFile filePath  ReadMode
+--     contents <- hGetContents handle 
+--     let pPairs = getPreferPair $ parseWord <$> words contents 
+--         newPairs = do 
+--             a <- pPairs
+--             b <- pPairs 
+--             guard $ snd a == "1"
+--             guard $ snd b == "0"
+--             pure $ ((fst a), (fst b))
+--     pure $ newPairs
+--     where 
+--         getPreferPair :: KnowledgeSpace -> [(String,String)]
+--         getPreferPair ks = (\k -> (ruleName k, preferName k)) <$> ks 
+
 
 parseWord :: String -> Knowledge
 parseWord w = 
@@ -101,8 +99,6 @@ chainingRule knowledgeMap =
                                 let r = Map.lookup name rm 
                                 in fromMaybe l r 
 
-
-
 mkEnv :: L.LanguageMap -> Env 
 mkEnv lm = 
     let 
@@ -110,16 +106,21 @@ mkEnv lm =
         strictRule = L.StrictRules [ l | l <- literalList, L.imp l == M.S]
         defeasibleRule = L.DefeasibleRules [ l | l <- literalList, L.imp l == M.D]
         atoms = M.rmdups [ l | l <- concat (L.body <$> literalList) ++ (L.conC <$> literalList), L.imp l == M.N]
-        demoPrefer = makeDemoPrefer lm 
+        demoPrefer = makeDemoPrefer (L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule)
     in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] demoPrefer
     where 
-        makeDemoPrefer :: L.LanguageMap -> L.PreferenceSpace
-        makeDemoPrefer lm =
-            let 
-                atom = L.conC . snd <$> Map.toList lm 
-                posAtom = [a | a <- atom, '!' `notElem` L.name a] 
-                negAtom = M.neg <$> posAtom 
-            in zipWith L.Preference posAtom negAtom 
+        makeDemoPrefer :: L.Language -> L.PreferenceSpace
+        makeDemoPrefer lang = do 
+                        a <- lang 
+                        b <- lang 
+                        guard $ a `LU.isRebutting`b 
+                        guard $ head (L.name (L.conC a)) /= '!'
+                        pure $ L.Preference a b 
+--             let 
+--                 atom = L.conC . snd <$> Map.toList lm 
+--                 posAtom = [a | a <- atom, '!' `notElem` L.name a] 
+--                 negAtom = M.neg <$> posAtom 
+--             in zipWith L.Preference posAtom negAtom 
 
 
 k2l :: KnowledgeSpace -> L.LanguageMap 

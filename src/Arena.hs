@@ -1,10 +1,13 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Arena where
 
+import           qualified Data.HashMap.Strict as Map 
 import           qualified Space.Argumentation as A 
 import           qualified Space.Language   as L 
 import           qualified Parser.LanguageParser as PL
+import           qualified Parser.FileParser as PF
 import           qualified Space.Meta as M 
+
 import           Env(Env(..))
 -- | Examples before Chapter 3
 
@@ -87,3 +90,41 @@ defeasibleRoot :: FilePath
 defeasibleRoot = datasetRoot ++ "Defeasbile"
 strictRoot :: FilePath
 strictRoot= datasetRoot ++ "Strict"
+
+
+-- | test File 
+
+testPath :: String 
+testPath = "./Examples/Teams/"
+trickyPath = "./Examples/tricky/"
+testFile :: String 
+testFile = "b2.txt"
+largeFile = "b7.txt"
+devFile = "b3.txt"
+testTricky= "tricky_rules.txt"
+
+readTestFile :: IO PF.KnowledgeSpace
+readTestFile = PF.stringToKnowledge (testPath ++ testFile)
+
+readHardFile :: IO PF.KnowledgeSpace
+readHardFile = PF.stringToKnowledge (testPath ++ largeFile)
+
+readDevFile :: IO PF.KnowledgeSpace
+readDevFile = PF.stringToKnowledge (testPath ++ devFile)
+
+readTrickyFile :: IO PF.KnowledgeSpace
+readTrickyFile = PF.stringToKnowledge (trickyPath ++ testTricky)
+
+demoEnv :: FilePath -> IO Env
+demoEnv filePath = do 
+    k <- PF.stringToKnowledge filePath
+    let 
+        l = PF.k2l k 
+        r = PF.chainingRule l 
+    pure $ PF.mkEnv r 
+
+demoLiteralMap :: Env -> Map.HashMap M.Name L.Literal
+demoLiteralMap env = 
+    let 
+        language = envLangSpace env 
+    in Map.fromList $ zip (L.name <$> language ) language
