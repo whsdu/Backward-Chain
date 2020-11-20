@@ -1,8 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: de0cf259591ef5be61434a7b3f58096311acd0dd4136f96670b66d62fc06fd9c
 
 name:           DT
 version:        0.1.0.0
@@ -33,6 +35,7 @@ library
       Parser.FileParser
       Parser.LanguageParser
       Space.Argumentation
+      Space.Dung
       Space.Language
       Space.Meta
       Utility.Argumentation

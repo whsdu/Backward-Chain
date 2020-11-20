@@ -10,10 +10,10 @@ module Utility.Language
     , isPreferable
     )where
 
-import           Control.Monad.Reader
+import Control.Monad.Reader ( MonadIO, MonadReader, forM )
 import           Env                  (App, Has (..), UseRuleOnly, grab)
 import qualified Space.Language       as L
-import qualified Space.Meta           as M (Negation(..), Imp(..), rmdups)
+import qualified Space.Meta           as M (Negation(..), Imp(..), Name, rmdups)
 
 
 -- |A strict rule is applicable with respect to a set of literals:
@@ -190,7 +190,21 @@ rsForLiteral l = do
 
 -- | Once dataset has been converted to Landspace
 -- It would be not possible to has rules with no rule body.
+-- 1. to check if there are loop support.
+-- 2. to check if every conclusion has ground support. 
+-- 3. Others:
 validLanguageSpace
     :: L.Language
     -> Either L.Language L.Language
 validLanguageSpace = undefined
+
+
+scanOrderedSupportPath :: [[L.Literal]] -> ([L.Literal],Bool)
+scanOrderedSupportPath = undefined 
+
+getOrderedSupportPath :: L.Language -> M.Name -> [[L.Literal]]
+getOrderedSupportPath = undefined 
+
+tracer :: L.LanguageMap -> [L.Literal] -> Bool
+tracer = undefined 
+
