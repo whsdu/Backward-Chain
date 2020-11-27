@@ -8,6 +8,8 @@ module Utility.Language
     , isUndercutting
     , isAttack
     , isPreferable
+    , supportPathes
+    , handleRule
     )where
 
 import Control.Monad.Reader ( MonadIO, MonadReader, forM )
@@ -32,6 +34,8 @@ isConsistent literals = not . or $ auxiFunc literals []
         auxiFunc [_] acc = acc 
         auxiFunc (l:ls) acc = auxiFunc ls $ (M.negation l <$> ls)  ++ acc 
 
+-- |TODO: Undermining need to be unified with rebutting 
+-- BC algorithm sub argument is not included 
 isRebutting :: L.Literal -> L.Literal -> Bool
 isRebutting a b =
     let
@@ -42,12 +46,21 @@ isRebutting a b =
         isRebutting 
         && 
         M.D == L.imp b 
-            
+
+-- | `a` undercut `b` when 
+-- 1. conclusion of `a` is the negation of argument `b`
+-- 2. Toprule of `b` is defeasible rule `D`
+-- TODO: now, undercut on Atom is allowed and will return False, 
+-- 1. would this function cover all undercut situation described in paper? 
+-- 2. Would this function cover situation other than described in paper ? for ex, Atom !?
 isUndercutting :: L.Literal -> L.Literal ->  Bool
 isUndercutting a b = 
     let 
         concA = L.conC a 
-    in M.negation concA b
+    in 
+        M.negation concA b 
+        && 
+        L.imp b == M.D
 
 isAttack :: L.Literal -> L.Literal -> Bool 
 isAttack a b = a `isRebutting` b || a `isUndercutting` b
@@ -70,9 +83,6 @@ instance LanguageContext App where
     langClosure = closure
     langAL = rulesForLiteral
     langASG = rsForLiteral
-
-
-
 
 -- |  Work for Argumentation.undercutting : O(n)     
 -- Toprule function of Argumenation space returns rule with no name (Anonymonus Rule)     
@@ -136,13 +146,13 @@ closure p = do
     pure closurePS
     
 -- | Recursively find all Rules whose conclusion (head) are the given literal. O(n^2)\\
--- And find all rules whos conclusion are bodys of these rules found above.\\\
+-- And find all rules whose conclusion are body's of these rules found above.\\\
 -- And continue above step.     
 -- This actually compute the support path of a given `Literal` .\\
 -- It is different from GRI, because support path in GRI only compute support path for rule.\\\
 -- It is different from `Definition 5`, because `Definition 5` has no recursive operation. \\
--- It is the same as descrbied in the pseudo-code of `AL`.\\
--- This is the core of implemenation of `BC.funcAL`.
+-- It is the same as described in the pseudo-code of `AL`.\\
+-- This is the core of implementation of `BC.funcAL`.
 rulesForLiteral ::
     ( MonadReader env m
     , UseRuleOnly env 
@@ -187,6 +197,73 @@ rsForLiteral l = do
                 if all == initRL 
                     then pure all
                     else asg all 
+
+
+-- | [[a],[b1,b2,b3],[c2,c3,c4]...]
+-- body of `a` supported by b1,b2,b3
+-- bodies of b1,b2,b3, supported by c2,c3,c4
+type Path = [L.Language]
+
+-- supportPaths :: 
+--     ( MonadReader env m 
+--     , UseRuleOnly env 
+--     , MonadIO m 
+--     ) => L.Literal -> m [Path]
+-- supportPaths l = do 
+--     sRules <- L.getStrictRules <$> grab @L.StrictRules
+--     dRules <- L.getDefeasibleRules <$> grab @L.DefeasibleRules
+--     case scanLan4Paths l (sRules++dRules) of 
+--         Nothing -> error "Target argument does not reach the ground"
+--         Just a -> pure a 
+--     where
+--         scanLan4Paths :: L.Literal -> L.Language -> Maybe L.Language 
+--         scanLan4Paths l lang =  
+--             let 
+--                 supportRules = [ r | r <- lang , L.conC r == l]
+--             in undefined 
+
+-- p lang sr = 
+--         let
+--             paral = handleRule lang sr 
+--             acc = 
+--                 do 
+--                     s <-  sr 
+--                     p <- paral 
+--                     pure $ s : p 
+--         in 
+--             concat $ p lang acc <$> paral 
+
+-- | TODOs: why DOES this work ? ? 
+-- what is concat here ? I write this code all by myself and .....
+supportPathes :: L.Language -> L.Language -> [[L.Language]]
+supportPathes lang sRules = 
+    let bodies = concat $ L.body <$> sRules
+    in 
+        if null bodies
+            then [[sRules]]
+        else 
+            let branches = handleRule lang bodies  
+            in
+                do 
+                    b <-  concat $ supportPathes lang <$> branches 
+                    pure $ sRules : b
+
+-- | branch (Language) is a section of path ([Language])
+-- from a branch to sub level parallel branches [Language]. 
+handleRule :: (Foldable t, Functor t) => [L.Literal] -> t L.Literal -> [[L.Literal]]
+handleRule lang subBodies= 
+    let subLevel = concludedBy lang <$> subBodies
+    in foldr acc [[]] subLevel 
+    where 
+        acc :: [a] -> [[a]] -> [[a]] 
+        acc l ls = do 
+                e <- l 
+                a <- ls 
+                pure $  e:a 
+        concludedBy :: L.Language -> L.Literal -> L.Language
+        concludedBy lang l = [r | r <- lang , L.conC r == l]
+
+
 
 -- | Once dataset has been converted to Landspace
 -- It would be not possible to has rules with no rule body.

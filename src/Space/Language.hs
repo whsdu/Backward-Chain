@@ -12,52 +12,69 @@ module Space.Language
     , body
     , imp
     , conC
-    , eqLang
+    , lanEqual
     )where
 
 import Space.Meta (Name, Imp(..), Negation(..))
 import qualified Data.HashMap.Strict as Map
 import qualified GHC.List as GHC (head)
 
-
+-- | Literal is defined recursively because body and conclusion(head) or rules could also be rule itself.
+-- `Rule` is constructor of `Ordinary Premises`, `Axiom Premises`, `Strict Rules` & `Defeasible Rules`. 
+-- `Atom` is constructor of conclusion other than above `Premises` or `Rules`.   
+-- `n` introduced in paper maps a rule to a literal, it is not necessary here when Literal is defined recursively like this.
+-- TODO: actually, Atom could also be represented by Rule, with 'Imp` being 'N', this maybe over engineered 
+-- If it is possible maybe use type programming to handle this ?
 data Literal where
     Atom :: Name -> Literal
     Rule :: Name -> [Literal] -> Imp -> Literal -> Literal
 
+-- | Preference needs to be redefined 
 data Preference where 
     Preference :: Literal -> Literal -> Preference
-
 type PreferenceSpace = [Preference]
 
+-- | `L` language is a set of `Literal`
 type Language = [Literal]
+
+-- | LanguageMap is a dictionary used to query Literal with given name
 type LanguageMap = Map.HashMap Name Literal 
+
 newtype StrictRules = StrictRules {getStrictRules :: Language}
 newtype DefeasibleRules = DefeasibleRules {getDefeasibleRules :: Language}
 
--- | literal is function 'Name' , introduced in last line of page 2.
--- Handle for rules to prevent other rule application is expressed in the
--- instance of Negation
+-- | name of an instantiation of type `Literal`: it plays two rules:
+-- 1. To be used to guarantee the uniqueness of a `Literal`.
+-- 2. To be used to defined negation with simple `!`.
 name :: Literal -> Name
 name (Rule n _ _ _) = n
 name (Atom n)       = n
 
+-- | Body Imp Conc
+-- Get body of a rule
 body  :: Literal -> [Literal]
 body (Rule _ b _ _) = b
 body (Atom _)       = []
 
+-- | Body Imp Conc
+-- Get Imp or a rule 
 imp :: Literal -> Imp
 imp (Rule _ _ i _) = i
 imp (Atom _)       = N
 
+-- | Body Imp Conc
+-- Get conclusion (head) of a rule 
 conC :: Literal -> Literal
 conC (Rule _ _ _ h) = h
 conC a@(Atom _)     = a
 
-eqLang :: Language -> Language -> Bool 
-eqLang al bl = isElemB && isElemA 
+-- | check if two list of Literal contains same elements.
+lanEqual :: Language -> Language -> Bool 
+lanEqual al bl = isElemB && isElemA 
     where 
         isElemB = and [ a `elem` bl | a <- al ]
         isElemA = and [ b `elem` al | b <- bl ]
+
 instance Show Literal where
     show (Rule n b i h) = n ++ ": " ++ bs ++ im ++ head
         where
