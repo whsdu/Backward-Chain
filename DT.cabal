@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: de0cf259591ef5be61434a7b3f58096311acd0dd4136f96670b66d62fc06fd9c
+-- hash: efd5681f29492f61b9f10d94dc9529d7b9ad99c28c14ab2cf05ce9f281a77f25
 
 name:           DT
 version:        0.1.0.0
@@ -29,6 +29,11 @@ library
   exposed-modules:
       Algorithm.BC
       Arena
+      Arena.Graph1
+      Arena.Graph2
+      Arena.Graph3
+      Arena.Graph4
+      Arena.GraphSimpleDemo
       Env
       GRI.GRI
       Lib

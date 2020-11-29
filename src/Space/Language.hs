@@ -2,6 +2,9 @@
 module Space.Language 
     ( Literal (..)
     , Language 
+    , Path 
+    , EquifinalPathSections
+    , EquifinalPaths
     , LanguageMap
     , AnonyRule(..)
     , StrictRules (..)
@@ -36,6 +39,13 @@ type PreferenceSpace = [Preference]
 
 -- | `L` language is a set of `Literal`
 type Language = [Literal]
+
+type PathSection = Language 
+type Path = [PathSection]
+
+type EquifinalPathSections = [PathSection]
+
+type EquifinalPaths = [Path]
 
 -- | LanguageMap is a dictionary used to query Literal with given name
 type LanguageMap = Map.HashMap Name Literal 

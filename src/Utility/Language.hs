@@ -8,8 +8,10 @@ module Utility.Language
     , isUndercutting
     , isAttack
     , isPreferable
-    , supportPathes
-    , handleRule
+    , equifinalPaths
+    , equifinalPathSections
+    , equifinalPathForQuery
+    , concludedBy
     )where
 
 import Control.Monad.Reader ( MonadIO, MonadReader, forM )
@@ -198,71 +200,91 @@ rsForLiteral l = do
                     then pure all
                     else asg all 
 
-
--- | [[a],[b1,b2,b3],[c2,c3,c4]...]
--- body of `a` supported by b1,b2,b3
--- bodies of b1,b2,b3, supported by c2,c3,c4
-type Path = [L.Language]
-
--- supportPaths :: 
---     ( MonadReader env m 
---     , UseRuleOnly env 
---     , MonadIO m 
---     ) => L.Literal -> m [Path]
--- supportPaths l = do 
---     sRules <- L.getStrictRules <$> grab @L.StrictRules
---     dRules <- L.getDefeasibleRules <$> grab @L.DefeasibleRules
---     case scanLan4Paths l (sRules++dRules) of 
---         Nothing -> error "Target argument does not reach the ground"
---         Just a -> pure a 
---     where
---         scanLan4Paths :: L.Literal -> L.Language -> Maybe L.Language 
---         scanLan4Paths l lang =  
---             let 
---                 supportRules = [ r | r <- lang , L.conC r == l]
---             in undefined 
-
--- p lang sr = 
---         let
---             paral = handleRule lang sr 
---             acc = 
---                 do 
---                     s <-  sr 
---                     p <- paral 
---                     pure $ s : p 
---         in 
---             concat $ p lang acc <$> paral 
-
--- | TODOs: why DOES this work ? ? 
--- what is concat here ? I write this code all by myself and .....
-supportPathes :: L.Language -> L.Language -> [[L.Language]]
-supportPathes lang sRules = 
+-- | sRules conjunctively concluded some conclusion
+equifinalPaths :: L.Language -> L.Language -> L.EquifinalPaths
+equifinalPaths lang sRules = 
     let bodies = concat $ L.body <$> sRules
     in 
         if null bodies
             then [[sRules]]
         else 
-            let branches = handleRule lang bodies  
+            let equifinality = equifinalPathSections lang bodies  
             in
                 do 
-                    b <-  concat $ supportPathes lang <$> branches 
+                    b <-  concat $ equifinalPaths lang <$> equifinality 
                     pure $ sRules : b
 
--- | branch (Language) is a section of path ([Language])
--- from a branch to sub level parallel branches [Language]. 
-handleRule :: (Foldable t, Functor t) => [L.Literal] -> t L.Literal -> [[L.Literal]]
-handleRule lang subBodies= 
-    let subLevel = concludedBy lang <$> subBodies
-    in foldr acc [[]] subLevel 
-    where 
-        acc :: [a] -> [[a]] -> [[a]] 
-        acc l ls = do 
-                e <- l 
-                a <- ls 
-                pure $  e:a 
-        concludedBy :: L.Language -> L.Literal -> L.Language
-        concludedBy lang l = [r | r <- lang , L.conC r == l]
 
+
+-- | 
+-- `lang`: env rule space
+-- `bodies` : bodies that concluded by lower level rules.
+-- `return`: equifinal path sections from lower-level rules to input bodies.[ path1, path2, path3 ...]
+equifinalPathSections :: (Foldable t, Functor t) => [L.Literal] -> t L.Literal -> L.EquifinalPathSections
+equifinalPathSections lang bodies =  
+    let subLevel = concludedBy lang <$> bodies 
+    in foldr createParallel [[]] subLevel 
+    where 
+        createParallel :: [a] -> [[a]] -> [[a]] 
+        createParallel paths ls = do 
+                path <- paths
+                a <- ls 
+                pure $  path:a 
+
+concludedBy :: L.Language -> L.Literal -> L.Language
+concludedBy lang l = [r | r <- lang , L.conC r == l]
+
+equifinalPathForQuery :: L.Language -> L.Literal -> L.EquifinalPaths
+equifinalPathForQuery lang atom = 
+    let 
+        dos = (:[]) <$> concludedBy lang atom 
+    in concat $ equifinalPaths lang <$> dos
+    
+-- | TODO:
+-- remove duplicated list of lists
+-- In a 3 level list, remove duplicate list of lists , for example
+{-
+[ [[1],[1,2,3],[4,5]]
+, [[2,3],[1,2,3]]
+, [[1],[1,2,3],[4,5]]
+]
+-}
+-- the 1st and 3rd element are the same, one should be removed
+removeSndDup :: (Eq a) =>  [[[a]]] -> [[[a]]]
+removeSndDup = undefined 
+
+
+-- |  TODO:
+-- In a 3 level list, remove elements that exists in previous lists, for example
+{-
+[ [[1],[1,2,3],[4,5]]
+, [[2,3],[1,2,3]]
+, [[1],[1,2,3,4],[4,5]]
+]
+-}
+-- the 3rd array, 4 appears in [1,2,3,4] and [4,5], thus the 4 in [4,5] should be removed. 
+removeExistingFstElem :: (Eq a) =>  [[[a]]] -> [[[a]]]
+removeExistingFstElem = undefined 
+
+-- | TODO: 
+-- Convert a Path to individual Strings 
+-- A String is a Chain of rules from Argument Conclusion to the fact
+-- For each String, we could find at most one last defeasible rule. 
+-- combine them together we have LastDefRules of a Path.
+pathToString :: L.Path -> L.Language
+
+-- | TODO:
+-- Premises / Facts/ Grounds of a Path
+pathToGround :: L.Path -> L.Language 
+
+-- | TODO:
+-- For Last- link 
+
+-- |TODO:
+-- For weakest -link 
+-- 1. Path is strict 
+-- 2. Path is firm 
+-- ect...
 
 
 -- | Once dataset has been converted to Landspace
