@@ -18,7 +18,7 @@ import Control.Monad.Reader ( MonadIO, MonadReader, forM )
 import           Env                  (App, Has (..), UseRuleOnly, grab)
 import qualified Space.Language       as L
 import qualified Space.Meta           as M (Negation(..), Imp(..), Name, rmdups)
-
+import qualified Data.HashMap.Strict as Map
 
 -- |A strict rule is applicable with respect to a set of literals:
 -- Names of the body of `arg1` is subet of Names of `arg2`
@@ -239,7 +239,8 @@ equifinalPathForQuery lang atom =
     let 
         dos = (:[]) <$> concludedBy lang atom 
     in concat $ equifinalPaths lang <$> dos
-    
+
+
 -- | TODO:
 -- remove duplicated list of lists
 -- In a 3 level list, remove duplicate list of lists , for example
@@ -271,12 +272,80 @@ removeExistingFstElem = undefined
 -- A String is a Chain of rules from Argument Conclusion to the fact
 -- For each String, we could find at most one last defeasible rule. 
 -- combine them together we have LastDefRules of a Path.
-pathToString :: L.Path -> L.Language
+pathToChains:: L.Path -> [L.Language]
+pathToChains = undefined 
 
 -- | TODO:
 -- Premises / Facts/ Grounds of a Path
-pathToGround :: L.Path -> L.Language 
+pathToAxiomFacts:: L.Path -> L.Language 
+pathToAxiomFacts = undefined 
 
+pathToOrdinaryFacts:: L.Path -> L.Language 
+pathToOrdinaryFacts = undefined 
+
+chainToLastDefRule :: L.Language -> L.Literal
+chainToLastDefRule = undefined 
+
+chainToDefRules :: L.Language -> L.Language 
+chainToDefRules = undefined 
+
+isStrictPath :: L.Path -> Bool 
+isStrictPath = undefined 
+
+isFirmPath :: L.Path -> Bool 
+isFirmPath = undefined 
+
+type PreferMap = Map.HashMap L.Literal Int 
+type Orderings = PreferMap -> L.Language -> L.Language -> Bool 
+type OrderingLink = PreferMap -> OrderingLink -> L.Path -> L.Path -> Bool 
+
+eli :: PreferMap -> L.Language -> L.Language -> Bool 
+eli = undefined 
+
+dem :: PreferMap -> L.Language -> L.Language -> Bool 
+dem = undefined 
+
+---- aboves are 1st level functions
+---- now is 2nd level functions that relies on them 
+
+lastLink :: PreferMap -> Orderings -> L.Path -> L.Path -> Bool 
+lastLink pm orderings pathA pathB 
+    | null ldrA && null ldrB = orderings pm (axiA ++ ordiA) (axiB ++ ordiB)
+    | otherwise = orderings pm ldrA ldrB
+  where 
+    ldrA :: L.Language
+    ldrA = chainToLastDefRule <$> pathToChains pathA
+    ldrB :: L.Language
+    ldrB = chainToLastDefRule <$> pathToChains pathB
+    axiA :: L.Language
+    axiA = pathToAxiomFacts pathA 
+    axiB :: L.Language
+    axiB = pathToAxiomFacts pathB
+    ordiA :: L.Language
+    ordiA = pathToOrdinaryFacts pathA 
+    ordiB :: L.Language
+    ordiB = pathToOrdinaryFacts pathB
+
+weakestLink :: PreferMap -> Orderings -> L.Path -> L.Path -> Bool 
+weakestLink pm orderings pathA pathB 
+    | isStrictPath pathA && isStrictPath pathB = orderings pm ordiA ordiB 
+    | isFirmPath pathA && isFirmPath pathB = orderings pm drA drB
+    | otherwise = orderings pm ordiA ordiB && orderings pm drA drB 
+  where 
+    drA :: L.Language
+    drA = concat $ chainToDefRules <$> pathToChains pathA
+    drB :: L.Language
+    drB = concat $ chainToDefRules <$> pathToChains pathB
+    ordiA :: L.Language
+    ordiA = pathToOrdinaryFacts pathA 
+    ordiB :: L.Language
+    ordiB = pathToOrdinaryFacts pathB
+
+-- | the successful path and related attacker paths
+-- What we want from the query ? 
+-- How to represent the Def relation. 
+p :: L.EquifinalPaths -> OrderingLink -> Orderings 
+p equiPaths oL
 -- | TODO:
 -- For Last- link 
 
@@ -286,7 +355,13 @@ pathToGround :: L.Path -> L.Language
 -- 2. Path is firm 
 -- ect...
 
-
+-- TODO: 
+-- 1. map a path to a list of LastDefRules 
+-- 2. map a path to a list of facts.
+-- 3. necessary for weakest-link
+--      3.1. check if a Path strict (no defeasible rules involved).
+--      3.2. check if a Path firm (relies on only axiom premises)
+----------------------------------------------
 -- | Once dataset has been converted to Landspace
 -- It would be not possible to has rules with no rule body.
 -- 1. to check if there are loop support.
