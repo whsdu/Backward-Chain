@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: efd5681f29492f61b9f10d94dc9529d7b9ad99c28c14ab2cf05ce9f281a77f25
+-- hash: ddf6758728c82bac6865a6e460be1784cb1d4d618a67c78de8d81981263ef903
 
 name:           DT
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       Algorithm.BC
       Arena
+      Arena.AttackGraph1
       Arena.Graph1
       Arena.Graph2
       Arena.Graph3

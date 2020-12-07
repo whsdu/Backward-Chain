@@ -297,7 +297,7 @@ isFirmPath = undefined
 
 type PreferMap = Map.HashMap L.Literal Int 
 type Orderings = PreferMap -> L.Language -> L.Language -> Bool 
-type OrderingLink = PreferMap -> OrderingLink -> L.Path -> L.Path -> Bool 
+type OrderingLink = PreferMap -> Orderings -> L.Path -> L.Path -> Bool 
 
 eli :: PreferMap -> L.Language -> L.Language -> Bool 
 eli = undefined 
@@ -345,7 +345,8 @@ weakestLink pm orderings pathA pathB
 -- What we want from the query ? 
 -- How to represent the Def relation. 
 p :: L.EquifinalPaths -> OrderingLink -> Orderings 
-p equiPaths oL
+p equiPaths oL = undefined 
+
 -- | TODO:
 -- For Last- link 
 

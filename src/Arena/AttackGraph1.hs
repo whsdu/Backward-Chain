@@ -1,4 +1,4 @@
-module AttackGraph1 where 
+module Arena.AttackGraph1 where 
 
 import           qualified Data.HashMap.Strict as Map 
 import           qualified Space.Argumentation as A 
