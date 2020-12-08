@@ -7,7 +7,6 @@ module Utility.Language
     , isRebutting
     , isUndercutting
     , isAttack
-    , isPreferable
     , equifinalPaths
     , equifinalPathSections
     , equifinalPathForQuery
@@ -17,7 +16,7 @@ module Utility.Language
 import Control.Monad.Reader ( MonadIO, MonadReader, forM )
 import           Env                  (App, Has (..), UseRuleOnly, grab)
 import qualified Space.Language       as L
-import qualified Space.Meta           as M (Negation(..), Imp(..), Name, rmdups)
+import qualified Space.Meta           as M (Negation(..), Imp(..), Name, rmdups, neg)
 import qualified Data.HashMap.Strict as Map
 
 -- |A strict rule is applicable with respect to a set of literals:
@@ -67,15 +66,15 @@ isUndercutting a b =
 isAttack :: L.Literal -> L.Literal -> Bool 
 isAttack a b = a `isRebutting` b || a `isUndercutting` b
 
-isPreferable :: L.PreferenceSpace -> L.Literal -> L.Literal ->  Bool 
-isPreferable preferSpace la lb = L.Preference la lb `elem` preferSpace
 
 class Monad m => LanguageContext m where
     langMatchRuleFromAnony :: L.AnonyRule -> m L.Language
     langRuleAsConc :: L.Literal -> m L.Language
     langClosure :: L.Language -> m L.Language
+    langPreferable :: L.Literal -> L.Literal -> m Bool 
     langAL :: L.Literal -> m L.Language 
     langASG :: L.Literal -> m L.Language 
+
 
 -- | LanguageContext are functions that relies on Language (a set of Literal) implicitly.   \\ 
 -- Detailed complexity in functions
@@ -83,8 +82,31 @@ instance LanguageContext App where
     langMatchRuleFromAnony = retriveRuleFromAnony
     langRuleAsConc = ruleAsConc
     langClosure = closure
+    langPreferable = isPreferable
     langAL = rulesForLiteral
     langASG = rsForLiteral
+
+-- | TODOs: This function need to be tested
+-- How to read this FunctionContext Constrain together with Env ReaderT pattern.
+isPreferable :: 
+    ( MonadReader env m 
+    , Has L.PreferenceMap env 
+    , MonadIO m 
+    ) => L.Literal -> L.Literal -> m Bool
+isPreferable l1 l2 = do 
+    prefMap <- grab @L.PreferenceMap
+    let 
+        l1Name = L.name l1 
+        l2Name = L.name l2 
+        prel1 = Map.lookup l1Name prefMap 
+        prel2 = Map.lookup l2Name prefMap 
+    case (>=) <$> prel1 <*> prel2 of 
+        Nothing -> error $ 
+            "Preference information is missing: either " 
+            ++ l1Name 
+            ++ " or " 
+            ++ l2Name
+        Just b -> pure b 
 
 -- |  Work for Argumentation.undercutting : O(n)     
 -- Toprule function of Argumenation space returns rule with no name (Anonymonus Rule)     
@@ -216,7 +238,9 @@ equifinalPaths lang sRules =
 
 
 
--- | 
+-- | `PathSection` is list of `Rules` between two level of arguments
+-- `Path` is a list of `PathSection` consequentially connect facts with target arguments. 
+-- `Equifinal Paths` is a list of `Path`s conclude the same argument based on different facts.
 -- `lang`: env rule space
 -- `bodies` : bodies that concluded by lower level rules.
 -- `return`: equifinal path sections from lower-level rules to input bodies.[ path1, path2, path3 ...]
@@ -235,11 +259,47 @@ concludedBy :: L.Language -> L.Literal -> L.Language
 concludedBy lang l = [r | r <- lang , L.conC r == l]
 
 equifinalPathForQuery :: L.Language -> L.Literal -> L.EquifinalPaths
-equifinalPathForQuery lang atom = 
+equifinalPathForQuery lang conC= 
     let 
-        dos = (:[]) <$> concludedBy lang atom 
+        dos = (:[]) <$> concludedBy lang conC
     in concat $ equifinalPaths lang <$> dos
 
+
+-- | TODOs:
+--  remove [] from returned of oddlayers
+evenLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
+evenLayer lang pMap (p:ps) = 
+    let conjunctiveArgs = concat p 
+        argumentPaths = queryAttackEquifinalPaths lang pMap conjunctiveArgs <$> conjunctiveArgs
+        defeaders = oddLayer lang pMap <$> argumentPaths
+    in if length defeaders == length argumentPaths then [p] else evenLayer lang pMap ps 
+evenLayer lang pMap [] = []
+
+-- | 
+oddLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
+oddLayer lang pMap ps = 
+    let 
+        r = evenLayer lang pMap ps 
+    in 
+        if length r == length ps then ps else [] 
+
+
+queryAttackEquifinalPaths :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
+queryAttackEquifinalPaths lang pMap pathLang conC = 
+    let
+        argPath = getArgPath pathLang conC 
+        qConc = M.neg conC 
+        attackPaths = equifinalPathForQuery lang qConc 
+        attackerPaths = filter  (`defeat` argPath) attackPaths
+    in attackerPaths 
+
+-- | this is where we start compare two argument based on their rules composition. 
+defeat :: L.Path -> L.Path -> Bool 
+defeat = undefined 
+
+-- | get a exactly path of an argument with a given path.  
+getArgPath :: L.Language -> L.Literal -> L.Path 
+getArgPath = undefined 
 
 -- | TODO:
 -- remove duplicated list of lists
@@ -346,6 +406,8 @@ weakestLink pm orderings pathA pathB
 -- How to represent the Def relation. 
 p :: L.EquifinalPaths -> OrderingLink -> Orderings 
 p equiPaths oL = undefined 
+
+
 
 -- | TODO:
 -- For Last- link 

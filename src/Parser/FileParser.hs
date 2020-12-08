@@ -6,12 +6,16 @@ import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
 import Data.Maybe(fromJust, fromMaybe)
 
-import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..),Preference(..), PreferenceSpace, name,body,imp,conC)
+import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..), PreferenceMap, name,body,imp,conC)
 import qualified Space.Meta as M
-import qualified Utility.Language as LU
-import Env 
+import Env ( Env(Env, envLangSpace) ) 
 
-
+-- | Transitional data type being used to bridge the gap between file and list of Literal. 
+-- File contains lines of strings that represent rules. 
+-- Target is list of terms of type Literal 
+-- The process is : 
+-- 1. lines of string --> list of Knowledge
+-- 2. List of Knowledge --> List of Literal
 data Knowledge = Knowledge 
     { ruleName :: String
     , premisesName :: [String]
@@ -25,11 +29,12 @@ type KnowledgeSpace = [Knowledge]
 
 parseEnv :: FilePath -> IO Env
 parseEnv filePath = do 
-    k <- stringToKnowledge filePath
+    k <- fileToKnowledge filePath
+    pMap <- fileToPrefMap filePath
     let 
         l = k2l k 
         r = chainingRule l 
-    pure $ mkEnv r 
+    pure $ mkEnv r pMap 
 
 parseLiteralMap :: Env -> Map.HashMap M.Name L.Literal
 parseLiteralMap env = 
@@ -40,24 +45,47 @@ parseLiteralMap env =
 parseQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
 parseQueryLiteral qName lm = fromJust $ Map.lookup qName lm 
 
-----------------------
-parseWord :: String -> Knowledge
-parseWord w = 
-    let 
-        [ruleName,ruleBody] = splitOn ":" w 
-        impName 
-            | '-' `elem` ruleBody = "->"
-            | otherwise = "=>"
-        [premies,conC] = splitOn impName ruleBody 
-        premisesName = splitOn "," premies 
-        [conclusionName,preferName] = splitOn "," conC
-    in Knowledge ruleName premisesName impName conclusionName preferName
+-- | TODOs: 
 
-stringToKnowledge :: FilePath -> IO KnowledgeSpace
-stringToKnowledge filePath = do
+-- now we have function to generate env from file 
+-- 1. need function to generation env from elm interface. 
+-- 2. need to function to union two env and handle possible error, such as conflict of name. 
+-- 3. Absolutely no error detection and handling functions. 
+
+-- | Auxiliary function converting string to data type knowledge 
+
+
+fileToKnowledge :: FilePath -> IO KnowledgeSpace
+fileToKnowledge filePath = do
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
     pure $ parseWord <$> words contents 
+  where 
+    parseWord :: String -> Knowledge
+    parseWord w = 
+        let 
+            [ruleName,ruleBody] = splitOn ":" w 
+            impName 
+                | '-' `elem` ruleBody = "->"
+                | otherwise = "=>"
+            [premies,conC] = splitOn impName ruleBody 
+            premisesName = splitOn "," premies 
+            [conclusionName,preferName] = splitOn "," conC
+        in Knowledge ruleName premisesName impName conclusionName preferName
+
+fileToPrefMap :: FilePath -> IO L.PreferenceMap
+fileToPrefMap filePath = do 
+    handle <- openFile filePath  ReadMode
+    contents <- hGetContents handle 
+    pure $ Map.fromList $ parsePre <$> words contents 
+  where 
+      parsePre :: String -> (M.Name,Int)
+      parsePre s = 
+          let 
+              name = head $ splitOn ":" s 
+              pre = read . last $ splitOn "," s
+          in (name,pre)
+
 
 k2l :: KnowledgeSpace -> L.LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty
@@ -136,20 +164,11 @@ chainingRule knowledgeMap =
                                 let r = Map.lookup name rm 
                                 in fromMaybe l r 
 
-mkEnv :: L.LanguageMap -> Env 
-mkEnv lm = 
+mkEnv :: L.LanguageMap -> L.PreferenceMap -> Env 
+mkEnv lm pMap = 
     let 
         literalList = snd <$> Map.toList lm 
         strictRule = L.StrictRules [ l | l <- literalList, L.imp l == M.S]
         defeasibleRule = L.DefeasibleRules [ l | l <- literalList, L.imp l == M.D]
         atoms = M.rmdups [ l | l <- concat (L.body <$> literalList) ++ (L.conC <$> literalList), L.imp l == M.N]
-        demoPrefer = makeDemoPrefer (L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule)
-    in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] demoPrefer
-    where 
-        makeDemoPrefer :: L.Language -> L.PreferenceSpace
-        makeDemoPrefer lang = do 
-                        a <- lang 
-                        b <- lang 
-                        guard $ a `LU.isRebutting`b 
-                        guard $ head (L.name (L.conC a)) /= '!'
-                        pure $ L.Preference a b 
+    in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] pMap

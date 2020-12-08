@@ -59,15 +59,14 @@ demoLanguage = atoms ++ ruleS ++ ruleD
 demoArguments :: A.ArgumentationSpace
 demoArguments = PL.parsBasicArgument demoLanguage demoArgumentNames
 
-demoPrefer1 :: L.Preference
-demoPrefer1 = L.Preference r7 r6
-demoPrefer2 :: L.Preference
-demoPrefer2 = L.Preference r4 r7
-demoPreferSpace :: [L.Preference]
-demoPreferSpace = [demoPrefer1, demoPrefer2]
-
+demoPreferMap :: L.PreferenceMap
+demoPreferMap = Map.fromList
+    [ ("r7",2)
+    , ("r6",1)
+    , ("r4",3)
+    ]
 paperEnv :: Env
-paperEnv = Env demoLanguage (L.StrictRules [r1,r2,r3,r4]) (L.DefeasibleRules [r5,r6,r7]) demoArguments demoPreferSpace
+paperEnv = Env demoLanguage (L.StrictRules [r1,r2,r3,r4]) (L.DefeasibleRules [r5,r6,r7]) demoArguments demoPreferMap
 
 -- a1,a2,a3,a4,a5,a6,a7 :: A.Argumentation
 -- a7 = head demoArguments
@@ -99,16 +98,16 @@ devFile = "b3.txt"
 testTricky= "tricky_rules.txt"
 
 readTestFile :: IO PF.KnowledgeSpace
-readTestFile = PF.stringToKnowledge (testPath ++ testFile)
+readTestFile = PF.fileToKnowledge (testPath ++ testFile)
 
 readHardFile :: IO PF.KnowledgeSpace
-readHardFile = PF.stringToKnowledge (testPath ++ largeFile)
+readHardFile = PF.fileToKnowledge (testPath ++ largeFile)
 
 readDevFile :: IO PF.KnowledgeSpace
-readDevFile = PF.stringToKnowledge (testPath ++ devFile)
+readDevFile = PF.fileToKnowledge (testPath ++ devFile)
 
 readTrickyFile :: IO PF.KnowledgeSpace
-readTrickyFile = PF.stringToKnowledge (trickyPath ++ testTricky)
+readTrickyFile = PF.fileToKnowledge (trickyPath ++ testTricky)
 
 demoEnv :: FilePath -> IO Env
 demoEnv = PF.parseEnv

@@ -33,17 +33,18 @@ funcASG = LU.langASG
 -- The filtration is not being recorded.
 funcDefGen :: 
     ( MonadReader env m
-    , Has L.PreferenceSpace env 
+    , Has L.PreferenceMap env 
     , LU.LanguageContext m 
-    , MonadIO m ) => L.Language -> m (L.Language, L.PreferenceSpace)
-funcDefGen language = do
-    perfs <- grab @L.PreferenceSpace 
-    let
-        isPreferable = LU.isPreferable perfs 
-        def = do 
-            la <- language 
-            lb <- language 
-            guard $ la `LU.isAttack` lb 
-            guard $ la `isPreferable` lb 
-            pure $ L.Preference la lb 
-    pure  ( language, def )
+    , MonadIO m ) => L.Language -> m (L.Language, [(L.Literal,L.Literal)])
+funcDefGen = undefined 
+-- funcDefGen language = do
+    -- perfs <- grab @L.PreferenceMap
+    -- let
+        -- isPreferable = LU.isPreferable perfs 
+        -- def = do 
+            -- la <- language 
+            -- lb <- language 
+            -- guard $ la `LU.isAttack` lb 
+            -- guard $ la `isPreferable` lb 
+            -- pure $ L.Preference la lb 
+    -- pure  ( language, def )
