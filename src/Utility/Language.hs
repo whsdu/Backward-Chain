@@ -269,25 +269,50 @@ equifinalPathForQuery lang conC=
 --  remove [] from returned of oddlayers
 evenLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
 evenLayer lang pMap (p:ps) = 
-    let conjunctiveArgs = concat p 
-        argumentPaths = queryAttackEquifinalPaths lang pMap conjunctiveArgs <$> conjunctiveArgs
-        defeaders = oddLayer lang pMap <$> argumentPaths
-    in if length defeaders == length argumentPaths then [p] else evenLayer lang pMap ps 
+    let
+        nextLayerAttackers = queryNextLayerAttackers lang pMap p
+        defeaders = oddLayer lang pMap <$> nextLayerAttackers
+        succDefeaders = filter null defeaders 
+    in if length succDefeaders == length nextLayerAttackers then [p] else evenLayer lang pMap ps 
 evenLayer lang pMap [] = []
 
--- | 
+-- | The purpose of this function is to guarantee that all input equifinal paths are defeaded.
+--  `ps` is the equifinalPaths (Arguments)  that attack some upper layer argument(sub-argument)
+-- 
 oddLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
 oddLayer lang pMap ps = 
     let 
-        r = evenLayer lang pMap ps 
+        oddAttackers = queryNextLayerAttackers lang pMap <$> ps 
+        succAttackers = filter null oddAttackers
     in 
-        if length r == length ps then ps else [] 
+        if 
+            length succAttackers /= length ps 
+            then [] 
+            else  
+                concat $ evenLayer lang pMap <$> concat oddAttackers
 
+queryNextLayerAttackers :: L.Language -> L.PreferenceMap -> L.Path -> [L.EquifinalPaths]
+queryNextLayerAttackers lang pMap p  = 
+    let 
+        conjunctiveRules = concat p 
+        conjunctiveConcs = L.conC <$> conjunctiveRules 
+    in queryNextLayerAttack lang pMap conjunctiveRules <$> conjunctiveConcs
 
-queryAttackEquifinalPaths :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
-queryAttackEquifinalPaths lang pMap pathLang conC = 
+-- | TODOs: 
+-- What if to separate Equifinal Paths that disjunctively support `neg l`
+-- However one of them has a circle ? 
+queryRuleAttacks :: L.Language -> L.Literal -> L.EquifinalPaths
+queryRuleAttacks lang l = equifinalPathForQuery lang $ M.neg l 
+
+-- | `conC` is an conclusion from upper layer 
+-- 1. get the path to `conC` (PathC), there is only one path, because it is a section of one equifinal path. 
+-- 2. get equifinal paths to `neg conC`
+-- 3. filter the paths of `neg conC` , select these can defeat (PathC).
+-- returns: Arguments (Equifinal Paths) that successfully defeat `conC`.
+queryNextLayerAttack :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
+queryNextLayerAttack lang pMap pathRuls conC = 
     let
-        argPath = getArgPath pathLang conC 
+        argPath = getArgPath pathRuls conC 
         qConc = M.neg conC 
         attackPaths = equifinalPathForQuery lang qConc 
         attackerPaths = filter  (`defeat` argPath) attackPaths
@@ -328,8 +353,8 @@ removeExistingFstElem :: (Eq a) =>  [[[a]]] -> [[[a]]]
 removeExistingFstElem = undefined 
 
 -- | TODO: 
--- Convert a Path to individual Strings 
--- A String is a Chain of rules from Argument Conclusion to the fact
+-- Convert a Path to individual Chain
+-- A Chain of rules from Argument Conclusion to the fact
 -- For each String, we could find at most one last defeasible rule. 
 -- combine them together we have LastDefRules of a Path.
 pathToChains:: L.Path -> [L.Language]
