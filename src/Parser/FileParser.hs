@@ -59,7 +59,7 @@ fileToKnowledge :: FilePath -> IO KnowledgeSpace
 fileToKnowledge filePath = do
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
-    pure $ parseWord <$> words contents 
+    pure $ parseWord <$> removeComment (lines contents)
   where 
     parseWord :: String -> Knowledge
     parseWord w = 
@@ -77,7 +77,7 @@ fileToPrefMap :: FilePath -> IO L.PreferenceMap
 fileToPrefMap filePath = do 
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
-    pure $ Map.fromList $ parsePre <$> words contents 
+    pure $ Map.fromList $ parsePre <$> removeComment( lines contents )
   where 
       parsePre :: String -> (M.Name,Int)
       parsePre s = 
@@ -86,6 +86,8 @@ fileToPrefMap filePath = do
               pre = read . last $ splitOn "," s
           in (name,pre)
 
+removeComment :: [String] -> [String]
+removeComment sl = [s | s<-sl ,'#' `notElem` s] 
 
 k2l :: KnowledgeSpace -> L.LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty

@@ -359,6 +359,7 @@ removeExistingFstElem = undefined
 -- A Chain of rules from Argument Conclusion to the fact
 -- For each String, we could find at most one last defeasible rule. 
 -- combine them together we have LastDefRules of a Path.
+-- Different Chains could have same last defeasible rule, these duplication needs to be removed.
 pathToChains:: L.Path -> [L.Language]
 pathToChains = undefined 
 
@@ -418,7 +419,7 @@ eli' pMap l2 (l:ls)=
     let 
         rl = [ sl | sl <- l2 , preferThan pMap sl l]
     in 
-         not (length rl /= length l)   || eli' pMap l2 ls 
+         length rl /= length l2   || eli' pMap l2 ls 
 eli' pMap l2 [] = False 
 
 dem' :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
@@ -426,7 +427,7 @@ dem' pMap (l:ls) l1 =
     let 
         rl = [ sl | sl <- l1 , preferThan pMap l sl]
     in 
-         not (length rl /= length l)   || dem' pMap ls l1 
+         length rl == length l1   || dem' pMap ls l1 
 dem' pMap l2 [] = False 
 
 
