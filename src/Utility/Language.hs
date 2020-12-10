@@ -258,6 +258,10 @@ equifinalPathSections lang bodies =
 concludedBy :: L.Language -> L.Literal -> L.Language
 concludedBy lang l = [r | r <- lang , L.conC r == l]
 
+-- | Given a Atom Literal , find all Equifinal Paths that conclude this Literal 
+-- | TODOs: 
+-- There is no sorting of these Equifinal Paths. The one with least rules should be placed in the front of the list. 
+-- The sorting method should be configurable. 
 equifinalPathForQuery :: L.Language -> L.Literal -> L.EquifinalPaths
 equifinalPathForQuery lang conC= 
     let 
@@ -265,15 +269,13 @@ equifinalPathForQuery lang conC=
     in concat $ equifinalPaths lang <$> dos
 
 
--- | TODOs:
---  remove [] from returned of oddlayers
 evenLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
 evenLayer lang pMap (p:ps) = 
     let
         nextLayerAttackers = queryNextLayerAttackers lang pMap p
         defeaders = oddLayer lang pMap <$> nextLayerAttackers
         succDefeaders = filter null defeaders 
-    in if length succDefeaders == length nextLayerAttackers then [p] else evenLayer lang pMap ps 
+    in if length succDefeaders == length nextLayerAttackers then p : concat defeaders else evenLayer lang pMap ps 
 evenLayer lang pMap [] = []
 
 -- | The purpose of this function is to guarantee that all input equifinal paths are defeaded.
@@ -374,26 +376,71 @@ chainToLastDefRule = undefined
 chainToDefRules :: L.Language -> L.Language 
 chainToDefRules = undefined 
 
+
+-- | Strict: 
+-- This implies rules must be strict ,however premiese could be ordinary.
 isStrictPath :: L.Path -> Bool 
-isStrictPath = undefined 
+isStrictPath path = 
+    let
+        lang = concat path 
+        rules = [p | p <- lang , not . null $ L.body p ]
+    in and [L.imp p == M.S | p <- rules ]
 
+-- | This argument relies on only Axiom premise
+-- TODOs: Handle if there is no fact support this argument!
 isFirmPath :: L.Path -> Bool 
-isFirmPath = undefined 
+isFirmPath path = 
+    let 
+        lang = concat path 
+        premiese = [p | p <- lang , not . null $ L.body p ]
+    in and [ L.imp p == M.S | p <- premiese]
 
-type PreferMap = Map.HashMap L.Literal Int 
-type Orderings = PreferMap -> L.Language -> L.Language -> Bool 
-type OrderingLink = PreferMap -> Orderings -> L.Path -> L.Path -> Bool 
+type Orderings = L.PreferenceMap -> L.Language -> L.Language -> Bool 
+type OrderingLink = L.PreferenceMap -> Orderings -> L.Path -> L.Path -> Bool 
 
-eli :: PreferMap -> L.Language -> L.Language -> Bool 
-eli = undefined 
+eli :: L.PreferenceMap -> L.Path -> L.Path -> Bool 
+eli pMap path1 path2 
+        | null (concat path1) && null (concat path2) = False 
+        | null (concat path1)  =  True 
+        | eli' pMap (concat path2) (concat path1) = True 
+        |  otherwise = False 
+        
 
-dem :: PreferMap -> L.Language -> L.Language -> Bool 
-dem = undefined 
+dem :: L.PreferenceMap -> L.Path -> L.Path -> Bool 
+dem pMap path1 path2  
+        | null (concat path1) && null (concat path2) = False 
+        | null (concat path1)  =  True 
+        | dem' pMap (concat path2) (concat path1) = True 
+        |  otherwise = False 
+
+eli' :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
+eli' pMap l2 (l:ls)= 
+    let 
+        rl = [ sl | sl <- l2 , preferThan pMap sl l]
+    in 
+         not (length rl /= length l)   || eli' pMap l2 ls 
+eli' pMap l2 [] = False 
+
+dem' :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
+dem' pMap (l:ls) l1 = 
+    let 
+        rl = [ sl | sl <- l1 , preferThan pMap l sl]
+    in 
+         not (length rl /= length l)   || dem' pMap ls l1 
+dem' pMap l2 [] = False 
+
+
+preferThan pMap l1 l2 = 
+    let cMay = do 
+                r1 <- Map.lookup (L.name l1) pMap 
+                r2 <- Map.lookup (L.name l2) pMap 
+                pure $ r1 >= r2 
+    in Just True == cMay
 
 ---- aboves are 1st level functions
 ---- now is 2nd level functions that relies on them 
 
-lastLink :: PreferMap -> Orderings -> L.Path -> L.Path -> Bool 
+lastLink :: L.PreferenceMap -> Orderings -> L.Path -> L.Path -> Bool 
 lastLink pm orderings pathA pathB 
     | null ldrA && null ldrB = orderings pm (axiA ++ ordiA) (axiB ++ ordiB)
     | otherwise = orderings pm ldrA ldrB
@@ -411,7 +458,7 @@ lastLink pm orderings pathA pathB
     ordiB :: L.Language
     ordiB = pathToOrdinaryFacts pathB
 
-weakestLink :: PreferMap -> Orderings -> L.Path -> L.Path -> Bool 
+weakestLink :: L.PreferenceMap -> Orderings -> L.Path -> L.Path -> Bool 
 weakestLink pm orderings pathA pathB 
     | isStrictPath pathA && isStrictPath pathB = orderings pm ordiA ordiB 
     | isFirmPath pathA && isFirmPath pathB = orderings pm drA drB
