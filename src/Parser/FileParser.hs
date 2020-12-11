@@ -77,33 +77,6 @@ fileToKnowledge filePath = do
             [conclusionName,preferName] = splitOn "," conC
         in Knowledge ruleName premisesName impName conclusionName preferName
 
--- | 
--- 1. preference map of rules and premises are separated. 
--- 2. no record of strict rules because this is not part of any preference set selection methods (weakest-link or last-link).
--- TODOs: 
--- improve the separation method of rules and premises. 
-fileToPrefMap :: FilePath -> IO (L.RdPrefMap, L.KnwlPrefMap)
-fileToPrefMap filePath = do 
-    handle <- openFile filePath  ReadMode
-    contents <- hGetContents handle 
-    let 
-        records = removeComment( lines contents )
-        premisesLines = [r | r <- records,(":=" `isInfixOf` pack r) || (":-" `isInfixOf` pack r)]
-        rulesLines = [r | r <- records, r `notElem` premisesLines && not ("->" `isInfixOf` pack r)]
-        rdMap = L.RdPrefMap $ Map.fromList $ parsePre <$> rulesLines
-        kwMap = L.KnwlPrefMap $ Map.fromList $ parsePre <$> premisesLines
-    pure (rdMap,kwMap)
-  where 
-      parsePre :: String -> (M.Name,Int)
-      parsePre s = 
-          let 
-              name = head $ splitOn ":" s 
-              pre = read . last $ splitOn "," s
-          in (name,pre)
-
-removeComment :: [String] -> [String]
-removeComment sl = [s | s<-sl ,'#' `notElem` s] 
-
 k2l :: KnowledgeSpace -> L.LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty
     where 
@@ -139,7 +112,8 @@ k2l knowledges = constructLS knowledges Map.empty
         insertRuleToLanguageSpace ruleName imp primies conclusion lspace =
             let 
                 impSym = if imp == "->" then M.S else M.D 
-                ruleLiteral = L.Rule ruleName primies impSym conclusion 
+                bodies = if head primies == L.Atom "" then [] else primies 
+                ruleLiteral = L.Rule ruleName bodies impSym conclusion 
             in Map.insert ruleName ruleLiteral lspace 
 
 chainingRule :: L.LanguageMap -> L.LanguageMap 
@@ -180,6 +154,33 @@ chainingRule knowledgeMap =
                             else 
                                 let r = Map.lookup name rm 
                                 in fromMaybe l r 
+
+-- | 
+-- 1. preference map of rules and premises are separated. 
+-- 2. no record of strict rules because this is not part of any preference set selection methods (weakest-link or last-link).
+-- TODOs: 
+-- improve the separation method of rules and premises. 
+fileToPrefMap :: FilePath -> IO (L.RdPrefMap, L.KnwlPrefMap)
+fileToPrefMap filePath = do 
+    handle <- openFile filePath  ReadMode
+    contents <- hGetContents handle 
+    let 
+        records = removeComment( lines contents )
+        premisesLines = [r | r <- records,(":=" `isInfixOf` pack r) || (":-" `isInfixOf` pack r)]
+        rulesLines = [r | r <- records, r `notElem` premisesLines && not ("->" `isInfixOf` pack r)]
+        rdMap = L.RdPrefMap $ Map.fromList $ parsePre <$> rulesLines
+        kwMap = L.KnwlPrefMap $ Map.fromList $ parsePre <$> premisesLines
+    pure (rdMap,kwMap)
+  where 
+      parsePre :: String -> (M.Name,Int)
+      parsePre s = 
+          let 
+              name = head $ splitOn ":" s 
+              pre = read . last $ splitOn "," s
+          in (name,pre)
+
+removeComment :: [String] -> [String]
+removeComment sl = [s | s<-sl ,'#' `notElem` s] 
 
 mkEnv :: L.LanguageMap -> L.RdPrefMap -> L.KnwlPrefMap -> Env 
 mkEnv lm rdMap knMap= 
