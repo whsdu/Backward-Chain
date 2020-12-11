@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ddf6758728c82bac6865a6e460be1784cb1d4d618a67c78de8d81981263ef903
+-- hash: b3f4a6004f4e603041324d0e8bf05e4de0f431b140e0c5353fc1bf055a1d39ed
 
 name:           DT
 version:        0.1.0.0
@@ -55,6 +55,7 @@ library
     , containers
     , mtl
     , split
+    , text
     , transformers
     , unordered-containers
   default-language: Haskell2010

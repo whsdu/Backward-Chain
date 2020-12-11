@@ -13,7 +13,7 @@ module Env where
 
 import Control.Monad.Reader 
 
-import Space.Language (Language,StrictRules(..),DefeasibleRules(..), PreferenceMap) 
+import Space.Language (Language,StrictRules(..),DefeasibleRules(..), PreferenceMap, RdPrefMap(..), KnwlPrefMap(..)) 
 import Space.Argumentation (ArgumentationSpace ) 
 
 -- | TODOs: 
@@ -26,7 +26,8 @@ data Env = Env
     , envSRuleSpace :: StrictRules
     , envDRuleSpace :: DefeasibleRules
     , envArguSpace :: ArgumentationSpace
-    , envPrefMap:: PreferenceMap
+    , envRdPrefMap:: RdPrefMap
+    , envKnwlPrefMap :: KnwlPrefMap
     } 
 
 instance Show Env where 
@@ -35,7 +36,8 @@ instance Show Env where
         "Strict Rules: " ++ show (getStrictRules $ envSRuleSpace env) ++ "\n" ++ 
         "Defeasible Rules: " ++ show (getDefeasibleRules $ envDRuleSpace env) ++ "\n" ++ 
         "ArgumentationSpace: " ++ show (envArguSpace env) ++ "\n" ++ 
-        "Preferrence Space: " ++ show (envPrefMap env) 
+        "Preferrence Map of defeasible rules: " ++ show (getRdPrefMap $ envRdPrefMap env) ++ "\n" ++ 
+        "Preferrence Map of axiom and ordinary knowledge: " ++ show (getKnwlPrefMap $ envKnwlPrefMap env) 
 
 class Has field env where 
     obtain :: env -> field 
@@ -43,11 +45,16 @@ class Has field env where
 grab :: forall field env m . (MonadReader env m , Has field env) => m field 
 grab = asks $ obtain @field 
 
+-- | Same type with different purpose should be wrapped respectively 
+-- so that we they could be declare as instance of some class separately.
+-- In this case `StrictRules` vs `DefeasibleRules` 
+-- `D
 instance Has Language Env where obtain = envLangSpace 
 instance Has StrictRules Env where obtain = envSRuleSpace
 instance Has DefeasibleRules Env where obtain = envDRuleSpace
 instance Has ArgumentationSpace Env where obtain = envArguSpace 
-instance Has PreferenceMap Env where obtain = envPrefMap
+instance Has RdPrefMap Env where obtain = envRdPrefMap
+instance Has KnwlPrefMap Env where obtain = envKnwlPrefMap
 
 type UseRuleOnly env = (Has StrictRules env, Has DefeasibleRules env)
 

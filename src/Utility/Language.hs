@@ -88,14 +88,18 @@ instance LanguageContext App where
 
 -- | TODOs: This function need to be tested
 -- How to read this FunctionContext Constrain together with Env ReaderT pattern.
+-- The implementation below is not correct , fix it shortly after
 isPreferable :: 
     ( MonadReader env m 
-    , Has L.PreferenceMap env 
+    , Has L.RdPrefMap env 
+    , Has L.KnwlPrefMap env 
     , MonadIO m 
     ) => L.Literal -> L.Literal -> m Bool
 isPreferable l1 l2 = do 
-    prefMap <- grab @L.PreferenceMap
+    prefMap1 <- grab @L.RdPrefMap
+    prefMap2 <- grab @L.KnwlPrefMap
     let 
+        prefMap = Map.union (L.getRdPrefMap prefMap1) (L.getKnwlPrefMap prefMap2)
         l1Name = L.name l1 
         l2Name = L.name l2 
         prel1 = Map.lookup l1Name prefMap 
@@ -415,20 +419,20 @@ dem pMap path1 path2
         |  otherwise = False 
 
 eli' :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
-eli' pMap l2 (l:ls)= 
-    let 
-        rl = [ sl | sl <- l2 , preferThan pMap sl l]
-    in 
-         length rl /= length l2   || eli' pMap l2 ls 
-eli' pMap l2 [] = False 
+eli' pMap l2 (l:ls)= undefined 
+--     let 
+--         rl = [ sl | sl <- l2 , preferThan pMap sl l]
+--     in 
+--          length rl /= length l2   || eli' pMap l2 ls 
+-- eli' pMap l2 [] = False 
 
 dem' :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
-dem' pMap (l:ls) l1 = 
-    let 
-        rl = [ sl | sl <- l1 , preferThan pMap l sl]
-    in 
-         length rl == length l1   || dem' pMap ls l1 
-dem' pMap l2 [] = False 
+dem' pMap (l:ls) l1 = undefined 
+--     let 
+--         rl = [ sl | sl <- l1 , preferThan pMap l sl]
+--     in 
+--          length rl == length l1   || dem' pMap ls l1 
+-- dem' pMap l2 [] = False 
 
 
 preferThan pMap l1 l2 = 

@@ -65,8 +65,8 @@ demoPreferMap = Map.fromList
     , ("r6",1)
     , ("r4",3)
     ]
-paperEnv :: Env
-paperEnv = Env demoLanguage (L.StrictRules [r1,r2,r3,r4]) (L.DefeasibleRules [r5,r6,r7]) demoArguments demoPreferMap
+-- paperEnv :: Env
+-- paperEnv = Env demoLanguage (L.StrictRules [r1,r2,r3,r4]) (L.DefeasibleRules [r5,r6,r7]) demoArguments demoPreferMap
 
 -- a1,a2,a3,a4,a5,a6,a7 :: A.Argumentation
 -- a7 = head demoArguments

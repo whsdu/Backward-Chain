@@ -30,6 +30,7 @@ library:
   - split
   - unordered-containers
   - containers
+  - text
 
 executables:
   DT-exe:

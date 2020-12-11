@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parser.FileParser where 
 
 import Control.Monad(guard)
@@ -5,8 +6,11 @@ import System.IO
 import Data.List.Split (splitOn)
 import  qualified Data.HashMap.Strict  as Map 
 import Data.Maybe(fromJust, fromMaybe)
+import Data.Text(isInfixOf,pack)
 
-import qualified Space.Language as L (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..), PreferenceMap, name,body,imp,conC)
+import qualified Space.Language as L 
+    (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..), RdPrefMap(..), 
+    KnwlPrefMap(..), PreferenceMap, name,body,imp,conC)
 import qualified Space.Meta as M
 import Env ( Env(Env, envLangSpace) ) 
 
@@ -30,11 +34,11 @@ type KnowledgeSpace = [Knowledge]
 parseEnv :: FilePath -> IO Env
 parseEnv filePath = do 
     k <- fileToKnowledge filePath
-    pMap <- fileToPrefMap filePath
+    (rdMap, knMap) <- fileToPrefMap filePath
     let 
         l = k2l k 
         r = chainingRule l 
-    pure $ mkEnv r pMap 
+    pure $ mkEnv r rdMap knMap 
 
 parseLiteralMap :: Env -> Map.HashMap M.Name L.Literal
 parseLiteralMap env = 
@@ -73,11 +77,22 @@ fileToKnowledge filePath = do
             [conclusionName,preferName] = splitOn "," conC
         in Knowledge ruleName premisesName impName conclusionName preferName
 
-fileToPrefMap :: FilePath -> IO L.PreferenceMap
+-- | 
+-- 1. preference map of rules and premises are separated. 
+-- 2. no record of strict rules because this is not part of any preference set selection methods (weakest-link or last-link).
+-- TODOs: 
+-- improve the separation method of rules and premises. 
+fileToPrefMap :: FilePath -> IO (L.RdPrefMap, L.KnwlPrefMap)
 fileToPrefMap filePath = do 
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
-    pure $ Map.fromList $ parsePre <$> removeComment( lines contents )
+    let 
+        records = removeComment( lines contents )
+        premisesLines = [r | r <- records,(":=" `isInfixOf` pack r) || (":-" `isInfixOf` pack r)]
+        rulesLines = [r | r <- records, r `notElem` premisesLines && not ("->" `isInfixOf` pack r)]
+        rdMap = L.RdPrefMap $ Map.fromList $ parsePre <$> rulesLines
+        kwMap = L.KnwlPrefMap $ Map.fromList $ parsePre <$> premisesLines
+    pure (rdMap,kwMap)
   where 
       parsePre :: String -> (M.Name,Int)
       parsePre s = 
@@ -166,11 +181,11 @@ chainingRule knowledgeMap =
                                 let r = Map.lookup name rm 
                                 in fromMaybe l r 
 
-mkEnv :: L.LanguageMap -> L.PreferenceMap -> Env 
-mkEnv lm pMap = 
+mkEnv :: L.LanguageMap -> L.RdPrefMap -> L.KnwlPrefMap -> Env 
+mkEnv lm rdMap knMap= 
     let 
         literalList = snd <$> Map.toList lm 
         strictRule = L.StrictRules [ l | l <- literalList, L.imp l == M.S]
         defeasibleRule = L.DefeasibleRules [ l | l <- literalList, L.imp l == M.D]
         atoms = M.rmdups [ l | l <- concat (L.body <$> literalList) ++ (L.conC <$> literalList), L.imp l == M.N]
-    in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] pMap
+    in Env (atoms ++ L.getStrictRules strictRule ++ L.getDefeasibleRules defeasibleRule) strictRule defeasibleRule [] rdMap knMap

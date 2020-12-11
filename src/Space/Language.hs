@@ -10,6 +10,8 @@ module Space.Language
     , StrictRules (..)
     , DefeasibleRules(..)
     , PreferenceMap
+    , RdPrefMap(..)
+    , KnwlPrefMap(..)
     , name 
     , body
     , imp
@@ -34,6 +36,8 @@ data Literal where
 -- | Preference needs to be redefined 
 type PreferenceMap = Map.HashMap Name Int 
 
+newtype RdPrefMap = RdPrefMap {getRdPrefMap :: Map.HashMap Name Int}
+newtype KnwlPrefMap = KnwlPrefMap { getKnwlPrefMap :: Map.HashMap Name Int}
 -- | `L` language is a set of `Literal`
 type Language = [Literal]
 
