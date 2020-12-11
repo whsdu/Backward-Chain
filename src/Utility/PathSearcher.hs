@@ -68,6 +68,7 @@ querySingleConclusion conC = do
     pure $ concat rs 
 
 
+
 ---- | below is the original implementation 
 
 equifinalPathForQuery' :: L.Language -> L.Literal -> L.EquifinalPaths

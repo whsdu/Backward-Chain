@@ -1,5 +1,38 @@
 # DT examples
 1. stack ghci
+
+1. demo1 -- test basic single path query 
+env1 <- parseEnv "./Examples/test/demo1.txt"
+run1 = runApp env1
+lMap = parseLiteralMap env
+q1 = parseQueryLiteral "p1" lMap
+q2 = parseQueryLiteral "!p2" lMap
+run $ querySingleConclusion q1
+run $ querySingleConclusion q2
+
+1. test Ordering issue
+env1 <- parseEnv "./Examples/test/demo1.txt"
+env3d <- parseEnv "./Examples/test/demo3-dem.txt"
+fMap = parseLiteralMap env1
+qc = parseQueryLiteral "p1" fMap
+p1 <- runApp env1 $ querySingleConclusion qc
+p3 <- runApp env3d $ querySingleConclusion qc
+
+1. test Preferable in demo4
+env4 <- parseEnv "./Examples/test/demo4-eli.txt"
+preMap =union ( (getRdPrefMap . envRdPrefMap) env4) ( (getKnwlPrefMap . envKnwlPrefMap ) env4)
+fmap4 = parseLiteralMap env4
+qb = parseQueryLiteral "p9" fmap4
+qc = parseQueryLiteral "!p9" fmap4
+rb <- runApp env4 $ querySingleConclusion qb
+rc <- runApp env4 $ querySingleConclusion qc
+
+lastLink preMap eli (head rc) (head rb)
+weakestLink preMap eli (head rc) (head rb)
+
+TODOs
+keep testing demo-4
+---------------
 1. use `:m` to clean the import space
 1. import necessary modules:
     ```

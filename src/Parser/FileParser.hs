@@ -180,7 +180,7 @@ fileToPrefMap filePath = do
           in (name,pre)
 
 removeComment :: [String] -> [String]
-removeComment sl = [s | s<-sl ,'#' `notElem` s] 
+removeComment sl = [s | s<-sl ,'#' `notElem` s && ' ' `notElem` s] 
 
 mkEnv :: L.LanguageMap -> L.RdPrefMap -> L.KnwlPrefMap -> Env 
 mkEnv lm rdMap knMap= 

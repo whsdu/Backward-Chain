@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7f8e4353307474d2063d213fbeb4278f23a9251ef918763e4b679bb9c3c0eb88
+-- hash: 64e55a55474f38ac791eb3da128458cca9b68254897931ad84f61fbdbbd1eb8c
 
 name:           DT
 version:        0.1.0.0
@@ -39,13 +39,13 @@ library
       GRI.GRI
       Lib
       Parser.FileParser
-      Parser.LanguageParser
       Space.Argumentation
       Space.Dung
       Space.Language
       Space.Meta
       Utility.Argumentation
       Utility.Language
+      Utility.Ordering
       Utility.PathSearcher
   other-modules:
       Paths_DT

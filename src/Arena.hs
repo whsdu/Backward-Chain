@@ -4,7 +4,6 @@ module Arena where
 import           qualified Data.HashMap.Strict as Map 
 import           qualified Space.Argumentation as A 
 import           qualified Space.Language   as L 
-import           qualified Parser.LanguageParser as PL
 import           qualified Parser.FileParser as PF
 import           qualified Space.Meta as M 
 
@@ -56,8 +55,8 @@ demoArgumentNames =
 demoLanguage :: L.Language
 demoLanguage = atoms ++ ruleS ++ ruleD
 
-demoArguments :: A.ArgumentationSpace
-demoArguments = PL.parsBasicArgument demoLanguage demoArgumentNames
+-- demoArguments :: A.ArgumentationSpace
+-- demoArguments = PL.parsBasicArgument demoLanguage demoArgumentNames
 
 demoPreferMap :: L.PreferenceMap
 demoPreferMap = Map.fromList

@@ -4,7 +4,6 @@ module Arena.Graph4
 import           qualified Data.HashMap.Strict as Map 
 import           qualified Space.Argumentation as A 
 import           qualified Space.Language   as L 
-import           qualified Parser.LanguageParser as PL
 import           qualified Parser.FileParser as PF
 import           qualified Space.Meta as M 
 

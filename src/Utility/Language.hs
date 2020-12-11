@@ -307,6 +307,7 @@ queryNextLayerAttackers lang pMap p  =
 -- | TODOs: 
 -- What if to separate Equifinal Paths that disjunctively support `neg l`
 -- However one of them has a circle ? 
+-- 1. Change the name to undercut
 queryRuleAttacks :: L.Language -> L.Literal -> L.EquifinalPaths
 queryRuleAttacks lang l = equifinalPathForQuery lang $ M.neg l 
 
@@ -315,6 +316,8 @@ queryRuleAttacks lang l = equifinalPathForQuery lang $ M.neg l
 -- 2. get equifinal paths to `neg conC`
 -- 3. filter the paths of `neg conC` , select these can defeat (PathC).
 -- returns: Arguments (Equifinal Paths) that successfully defeat `conC`.
+-- TODOs: 
+-- 1. Change the name : Attack in this case is defead as rebut here 
 queryNextLayerAttack :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
 queryNextLayerAttack lang pMap pathRuls conC = 
     let
@@ -328,7 +331,7 @@ queryNextLayerAttack lang pMap pathRuls conC =
 defeat :: L.Path -> L.Path -> Bool 
 defeat = undefined 
 
--- | get a exactly path of an argument with a given path.  
+-- | get a exactly path of an (sub) argument within a given path.  
 getArgPath :: L.Language -> L.Literal -> L.Path 
 getArgPath = undefined 
 
