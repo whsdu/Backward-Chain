@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeApplications #-}
 module Utility.Ordering where 
 
 import qualified Space.Meta as M 
@@ -14,15 +16,49 @@ import Control.Monad.IO.Class (MonadIO)
 -- 1. Links type 
 -- 2. Ordering type 
 -- to env 
-isPreferableThan ::
-    ( MonadReader env m 
-    , Has L.RdPrefMap env 
-    , Has L.KnwlPrefMap env 
-    , MonadIO m 
-    ) => L.Path -> L.Path -> m Bool 
-isPreferableThan a b = undefined 
-
 type Orderings = L.PreferenceMap -> L.Language -> L.Language -> Bool 
+type MonadOrderings = forall m . MonadIO m => L.Path -> L.Path -> m Bool 
+
+-- isPreferableThan ::
+--     ( MonadReader env m 
+--     , OrderingContext env
+--     , MonadIO m 
+--     ) => L.Path -> L.Path -> m Bool 
+-- isPreferableThan a b = undefined 
+
+lastEli :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+lastEli argA argB = do 
+    prefMap <- getPreferMap
+    pure $ lastLink prefMap eli argA argB 
+
+lastDem ::( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+lastDem argA argB =  do 
+    prefMap <- getPreferMap
+    pure $ lastLink prefMap dem argA argB
+
+weakestEli :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+weakestEli argA argB = do 
+    prefMap <- getPreferMap
+    pure $ weakestLink prefMap eli argA argB
+
+weakestDem :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+weakestDem argA argB = do 
+    prefMap <- getPreferMap
+    pure $ weakestLink prefMap dem argA argB
+
+{- Auxiliary function help to union preference map of defeasible rule and ordinary premises-}
+getPreferMap :: 
+    ( MonadReader env m 
+    , OrderingContext env
+    , MonadIO m 
+    ) => m L.PreferenceMap
+getPreferMap = do 
+    rdPreferenceMap <- L.getRdPrefMap <$> grab @L.RdPrefMap
+    knPreferenceMap <- L.getKnwlPrefMap <$> grab @L.KnwlPrefMap
+    let prefMap = Map.union rdPreferenceMap knPreferenceMap
+    pure prefMap 
+
+
 
 -- | Last-Link : select particular set of components of two Arguments(Paths)
 -- Check the preferable relation with certain method (dem or eli)
@@ -128,8 +164,8 @@ pathToDefRules path =
 
 {-Two auxiliary functions being used for both Weakest-Link Only-}
 
--- | Strict: 
--- This implies rules must be strict ,however premiese could be ordinary.
+-- |  This argument relies on only strict rules (premise could be ordinary). 
+-- TODOs: Exception Handling: When there is no fact support.
 isStrictPath :: L.Path -> Bool 
 isStrictPath path = 
     let
@@ -138,10 +174,10 @@ isStrictPath path =
     in and [L.imp p == M.S | p <- rules ]
 
 -- | This argument relies on only Axiom premise
--- TODOs: Handle if there is no fact support this argument!
+-- TODOs: Exception handling: When there is no fact support.
 isFirmPath :: L.Path -> Bool 
 isFirmPath path = 
     let 
         lang = concat path 
-        premiese = [p | p <- lang , not . null $ L.body p ]
+        premiese = [p | p <- lang , null $ L.body p ]
     in and [ L.imp p == M.S | p <- premiese]

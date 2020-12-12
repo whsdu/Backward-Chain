@@ -179,8 +179,12 @@ fileToPrefMap filePath = do
               pre = read . last $ splitOn "," s
           in (name,pre)
 
+-- | Remove 
+-- 1. # : comment line 
+-- 2. ' ' : lines with empty char
+-- 3. "" : lines with no char
 removeComment :: [String] -> [String]
-removeComment sl = [s | s<-sl ,'#' `notElem` s && ' ' `notElem` s] 
+removeComment sl = [s | s<-sl ,'#' `notElem` s && ' ' `notElem` s, s /= ""] 
 
 mkEnv :: L.LanguageMap -> L.RdPrefMap -> L.KnwlPrefMap -> Env 
 mkEnv lm rdMap knMap= 

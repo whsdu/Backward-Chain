@@ -6,10 +6,18 @@ import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader)
 
 import qualified Space.Language as L 
+import qualified Space.Meta as M 
 import Env 
+import qualified Utility.Ordering  as O
 import qualified Utility.Language as LU 
 
 
+{-
+The Rule Level Graph is being represented with a list of rules.
+Following function server the purpose of:
+1. Find a list of rules that eventually compose an argument. 
+2. Find different lists of rules that equivalent to different arguments of the same conclusion.
+-}
 concludeBy :: 
     ( MonadReader env m
     , UseRuleOnly env 
@@ -68,9 +76,69 @@ querySingleConclusion conC = do
     pure $ concat rs 
 
 
+{-Given: 
+1. The rule level graph representation ( the List of Rule)
+2. The prefernceMap that can be used to compute the preference relation between two arugment. 
+find the 
+-}
+evenLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
+evenLayer lang pMap (p:ps) = 
+    let
+        nextLayerAttackers = queryNextLayerRebut lang pMap p
+        defeaders = oddLayer lang pMap <$> nextLayerAttackers
+        succDefeaders = filter null defeaders 
+    in if length succDefeaders == length nextLayerAttackers then p : concat defeaders else evenLayer lang pMap ps 
+evenLayer lang pMap [] = []
 
----- | below is the original implementation 
+-- | The purpose of this function is to guarantee that all input equifinal paths are defeaded.
+--  `ps` is the equifinalPaths (Arguments)  that attack some upper layer argument(sub-argument)
+-- 
+oddLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
+oddLayer lang pMap ps = 
+    let 
+        oddAttackers = queryNextLayerRebut lang pMap <$> ps 
+        succAttackers = filter null oddAttackers
+    in 
+        if 
+            length succAttackers /= length ps 
+            then [] 
+            else  
+                concat $ evenLayer lang pMap <$> concat oddAttackers
 
+queryNextLayerRebut :: L.Language -> L.PreferenceMap -> L.Path -> [L.EquifinalPaths]
+queryNextLayerRebut lang pMap p  = 
+    let 
+        conjunctiveRules = concat p 
+        conjunctiveConcs = L.conC <$> conjunctiveRules 
+    in queryNextLayerAttack lang pMap conjunctiveRules <$> conjunctiveConcs
+
+-- | TODOs: 
+-- What if to separate Equifinal Paths that disjunctively support `neg l`
+-- However one of them has a circle ? 
+-- 1. Change the name to undercut
+queryNextLayerUndercut :: L.Language -> L.Literal -> L.EquifinalPaths
+queryNextLayerUndercut lang l = equifinalPathForQuery lang $ M.neg l 
+
+-- | `conC` is an conclusion from upper layer 
+-- 1. get the path to `conC` (PathC), there is only one path, because it is a section of one equifinal path. 
+-- 2. get equifinal paths to `neg conC`
+-- 3. filter the paths of `neg conC` , select these can defeat (PathC).
+-- returns: Arguments (Equifinal Paths) that successfully defeat `conC`.
+-- TODOs: 
+-- 1. Change the name : Attack in this case is defead as rebut here 
+queryNextLayerAttack :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
+queryNextLayerAttack lang pMap pathRuls conC = 
+    let
+        argPath = getArgPath pathRuls conC 
+        qConc = M.neg conC 
+        attackPaths = equifinalPathForQuery lang qConc 
+        attackerPaths = filter  (`defeat` argPath) attackPaths
+    in attackerPaths 
+
+
+{-
+---- | below is the original implementation of Equifinal Paths
+-}
 equifinalPathForQuery' :: L.Language -> L.Literal -> L.EquifinalPaths
 equifinalPathForQuery' lang conC= 
     let 

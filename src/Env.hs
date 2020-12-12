@@ -57,6 +57,7 @@ instance Has RdPrefMap Env where obtain = envRdPrefMap
 instance Has KnwlPrefMap Env where obtain = envKnwlPrefMap
 
 type UseRuleOnly env = (Has StrictRules env, Has DefeasibleRules env)
+type OrderingContext env = (Has RdPrefMap env, Has KnwlPrefMap env)
 
 newtype App a = App 
     { unApp :: ReaderT Env IO a 
