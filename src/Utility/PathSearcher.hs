@@ -4,6 +4,7 @@ module Utility.PathSearcher where
 
 import Control.Monad.IO.Class (MonadIO) 
 import Control.Monad.Reader (MonadReader)
+import Data.List (sort, reverse)
 
 import qualified Space.Language as L 
 import qualified Space.Meta as M 
@@ -73,7 +74,7 @@ querySingleConclusion conC = do
     let 
         dos = (:[]) <$> cs 
     rs <- mapM queryEquifinalPaths dos 
-    pure $ concat rs 
+    pure $ sort $ concat rs 
 
 
 {- Backward Chaining Search
@@ -83,6 +84,7 @@ Given:
 find the 
 -}
 
+-- eveLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> 
 -- | select one path from the list of equifinal paths.
 -- If no one attacks this path, return this path
 -- If it is attacked by some other equifinalpaths:
@@ -95,23 +97,32 @@ evenLayer' :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> [L.EquifinalP
 evenLayer' lang pMap (p:ps) = 
     let
         attackGroup = queryPathAttackers lang pMap p 
-        defenders = oddLayer' lang pMap <$> attackGroup
+        newLang = removeSeenPath p lang 
+        defenders = oddLayer' newLang pMap <$> attackGroup
         succDefeaders = filter (not . null) defenders
-    in if length succDefeaders == length attackGroup then [p] : concat succDefeaders else evenLayer' lang pMap ps 
+    in if length succDefeaders == length attackGroup 
+        then [p] : concat ( concat succDefeaders)
+        else evenLayer' lang pMap ps 
 evenLayer' _ _ [] = []
-
 
 -- | every path in this list of equifinal paths should be defeated 
 -- If all these paths are defeated then return these path together with the next layer defeaders path 
 -- If not all these path are dfeated then return [].
 -- oddLayer' :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> [L.EquifinalPaths]
-oddLayer' :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> [L.EquifinalPaths]
+oddLayer' :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> [[L.EquifinalPaths]]
 oddLayer' lang pMap ps = 
     let 
         attackGroups = [ (p, queryPathAttackers lang pMap p) | p <- ps , (not . null) (queryPathAttackers lang pMap p)]
     in if length attackGroups /=  length ps 
         then [] 
-        else concat $ checkAttackGroup lang pMap <$> attackGroups
+        else 
+            let 
+                seen = [ p | p <- ps , (not . null) (queryPathAttackers lang pMap p)]
+                newLang = removeSeenPath (concat seen) lang 
+            -- in checkAttackGroup newLang pMap <$> attackGroups
+                tt = checkAttackGroup newLang pMap <$> attackGroups
+            in 
+                if [] `notElem` tt then tt else [] 
     where 
         checkAttackGroup :: L.Language -> L.PreferenceMap -> (L.Path ,[L.EquifinalPaths]) -> [L.EquifinalPaths]
         checkAttackGroup lang fMap (path, group) = 
@@ -119,6 +130,12 @@ oddLayer' lang pMap ps =
                 defenderGroup = concat (evenLayer' lang fMap <$> group)
             in 
                 if not . null $ defenderGroup  then [path] : defenderGroup else [] 
+
+removeSeenPath :: L.Path -> L.Language -> L.Language
+removeSeenPath path lang = 
+    let 
+        seen = concat path 
+    in [l | l <-lang , l `notElem` seen]
 
 queryPathAttackers :: L.Language -> L.PreferenceMap -> L.Path -> [L.EquifinalPaths]
 queryPathAttackers lang pMap path = 
@@ -161,72 +178,24 @@ queryConcRebuts' lang pMap pathRuls conC =
         attackPaths = equifinalPathForQuery' lang qConc 
     in [p | p <- attackPaths, O.weakestLink pMap O.dem p argPath] -- This is problematic to convert to monad level 
 
-
-{-Old Implementation-}
-
--- evenLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
--- evenLayer lang pMap (p:ps) = 
---     let
---         nextLayerAttackers = queryNextLayerRebut lang pMap p
---         defeaders = oddLayer lang pMap <$> nextLayerAttackers
---         succDefeaders = filter null defeaders 
---     in if length succDefeaders == length nextLayerAttackers then p : concat defeaders else evenLayer lang pMap ps 
--- evenLayer lang pMap [] = []
-
--- -- | The purpose of this function is to guarantee that all input equifinal paths are defeaded.
--- --  `ps` is the equifinalPaths (Arguments)  that attack some upper layer argument(sub-argument)
--- -- 
--- oddLayer :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> L.EquifinalPaths
--- oddLayer lang pMap ps = 
---     let 
---         oddAttackers = queryNextLayerRebut lang pMap <$> ps 
---         succAttackers = filter null oddAttackers
---     in 
---         if 
---             length succAttackers /= length ps 
---             then [] 
---             else  
---                 concat $ evenLayer lang pMap <$> concat oddAttackers
-
--- queryNextLayerRebut :: L.Language -> L.PreferenceMap -> L.Path -> [L.EquifinalPaths]
--- queryNextLayerRebut lang pMap p  = 
---     let 
---         conjunctiveRules = concat p 
---         conjunctiveConcs = L.conC <$> conjunctiveRules 
---     in queryNextLayerAttack lang pMap conjunctiveRules <$> conjunctiveConcs
-
--- -- | TODOs: 
--- -- What if to separate Equifinal Paths that disjunctively support `neg l`
--- -- However one of them has a circle ? 
--- -- 1. Change the name to undercut
--- queryNextLayerUndercut :: L.Language -> L.Literal -> L.EquifinalPaths
--- queryNextLayerUndercut lang l = equifinalPathForQuery lang $ M.neg l 
-
--- -- | `conC` is an conclusion from upper layer 
--- -- 1. get the path to `conC` (PathC), there is only one path, because it is a section of one equifinal path. 
--- -- 2. get equifinal paths to `neg conC`
--- -- 3. filter the paths of `neg conC` , select these can defeat (PathC).
--- -- returns: Arguments (Equifinal Paths) that successfully defeat `conC`.
--- -- TODOs: 
--- -- 1. Change the name : Attack in this case is defead as rebut here 
--- queryNextLayerAttack :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
--- queryNextLayerAttack lang pMap pathRuls conC = 
---     let
---         argPath = getArgPath pathRuls conC 
---         qConc = M.neg conC 
---         attackPaths = equifinalPathForQuery lang qConc 
---         attackerPaths = filter  (`defeat` argPath) attackPaths
---     in attackerPaths 
-
-
 {-
 ---- | below is the original implementation of Equifinal Paths
 -}
+
+-- | Sorted by depth of the path. 
+-- Short path came first 
+sortEquifinalPaths :: L.EquifinalPaths -> L.EquifinalPaths 
+sortEquifinalPaths paths = 
+    let 
+        pathLengths = length <$> paths 
+        sortedLength = sort pathLengths
+    in [p | l <- sortedLength, p <- paths, length p == l]
+
 equifinalPathForQuery' :: L.Language -> L.Literal -> L.EquifinalPaths
 equifinalPathForQuery' lang conC= 
     let 
         dos = (:[]) <$> concludedBy' lang conC
-    in concat $ equifinalPaths' lang <$> dos
+    in sortEquifinalPaths . concat $ equifinalPaths' lang <$> dos
 
 concludedBy' :: L.Language -> L.Literal -> L.Language
 concludedBy' lang l = [r | r <- lang , L.conC r == l]

@@ -92,6 +92,7 @@ weakestLink pm orderings pathA pathB
 eli :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
 eli pMap argA argB 
         | null argA && null argB = False 
+        | null argB = False 
         | null argA  =  True 
         | otherwise = eli' pMap argA argB
         
@@ -99,6 +100,7 @@ eli pMap argA argB
 dem :: L.PreferenceMap -> L.Language -> L.Language -> Bool 
 dem pMap argA argB
         | null argA && null argB = False 
+        | null argB = False 
         | null argA  =  True 
         | otherwise = dem' pMap argA argB
         
