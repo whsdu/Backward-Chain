@@ -111,11 +111,11 @@ readTrickyFile = PF.fileToKnowledge (trickyPath ++ testTricky)
 demoEnv :: FilePath -> IO Env
 demoEnv = PF.parseEnv
 
-demoLiteralMap :: Env -> Map.HashMap M.Name L.Literal
-demoLiteralMap = PF.parseLiteralMap
+-- demoLiteralMap :: Env -> Map.HashMap M.Name L.Literal
+-- demoLiteralMap = PF.parseLiteralMap
 
-getQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
-getQueryLiteral = PF.parseQueryLiteral
+-- getQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
+-- getQueryLiteral = PF.parseQueryLiteral
 
 ------------ Examples below -------------------------
 

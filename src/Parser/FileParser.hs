@@ -12,7 +12,7 @@ import qualified Space.Language as L
     (Literal (..), Language , LanguageMap,StrictRules(..), DefeasibleRules(..), RdPrefMap(..), 
     KnwlPrefMap(..), PreferenceMap, name,body,imp,conC)
 import qualified Space.Meta as M
-import Env ( Env(Env, envLangSpace) ) 
+import Env ( Env(..))
 
 -- | Transitional data type being used to bridge the gap between file and list of Literal. 
 -- File contains lines of strings that represent rules. 
@@ -45,6 +45,15 @@ parseLiteralMap env =
     let 
         language = envLangSpace env 
     in Map.fromList $ zip (L.name <$> language ) language
+
+
+parsePreferenceMap :: Env -> L.PreferenceMap
+parsePreferenceMap env = 
+    let
+        rdMap = L.getRdPrefMap . envRdPrefMap $ env
+        knMap = L.getKnwlPrefMap . envKnwlPrefMap $ env 
+    in Map.union rdMap knMap 
+
 
 parseQueryLiteral :: String -> Map.HashMap M.Name L.Literal -> L.Literal
 parseQueryLiteral qName lm = fromJust $ Map.lookup qName lm 

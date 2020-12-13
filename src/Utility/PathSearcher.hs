@@ -108,7 +108,7 @@ evenLayer' _ _ [] = []
 oddLayer' :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> [L.EquifinalPaths]
 oddLayer' lang pMap ps = 
     let 
-        attackGroups = [ (p , queryPathAttackers lang pMap p) | p <- ps , (not . null) (queryPathAttackers lang pMap p)]
+        attackGroups = [ (p, queryPathAttackers lang pMap p) | p <- ps , (not . null) (queryPathAttackers lang pMap p)]
     in if length attackGroups /=  length ps 
         then [] 
         else concat $ checkAttackGroup lang pMap <$> attackGroups
@@ -125,7 +125,7 @@ queryPathAttackers lang pMap path =
     let 
         nextLayerRebutting = queryPathRebuts' lang pMap path
         nextLayerUndercutting = queryPathUndercut' lang path 
-    in nextLayerRebutting ++ nextLayerUndercutting
+    in filter ( not .null ) (nextLayerRebutting ++ nextLayerUndercutting)
 
 -- | TODOs: 
 -- What if to separate Equifinal Paths that disjunctively support `neg l`
@@ -146,18 +146,18 @@ queryPathRebuts' lang pMap p  =
     let 
         defeasible = [r | r <- concat p , L.imp r == M.D]
         conjunctiveConcs = L.conC <$> defeasible
-    in queryConcRebuts' lang pMap defeasible <$> conjunctiveConcs
+    in queryConcRebuts' lang pMap p <$> conjunctiveConcs
 
 -- | Given conclusion c
 -- Get all Equifinal paths of neg c
 -- select paths that defeat path of c.
 -- TODO: 
 -- Ordering functions is hard coded here. 
-queryConcRebuts' :: L.Language -> L.PreferenceMap -> L.Language -> L.Literal -> L.EquifinalPaths 
+queryConcRebuts' :: L.Language -> L.PreferenceMap -> L.Path -> L.Literal -> L.EquifinalPaths 
 queryConcRebuts' lang pMap pathRuls conC = 
     let
         qConc = M.neg conC 
-        argPath = head $ equifinalPathForQuery' pathRuls conC  -- This part do not need to lift to monad level
+        argPath = head $ equifinalPathForQuery' (concat pathRuls) conC  -- This part do not need to lift to monad level
         attackPaths = equifinalPathForQuery' lang qConc 
     in [p | p <- attackPaths, O.weakestLink pMap O.dem p argPath] -- This is problematic to convert to monad level 
 
