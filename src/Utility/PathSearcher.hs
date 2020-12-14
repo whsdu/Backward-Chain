@@ -137,6 +137,13 @@ removeSeenPath path lang =
         seen = concat path 
     in [l | l <-lang , l `notElem` seen]
 
+sortEquifinalPaths :: L.EquifinalPaths -> L.EquifinalPaths 
+sortEquifinalPaths paths = 
+    let 
+        pathLengths = length <$> paths 
+        sortedLength = sort pathLengths
+    in [p | l <- sortedLength, p <- paths, length p == l]
+
 queryPathAttackers :: L.Language -> L.PreferenceMap -> L.Path -> [L.EquifinalPaths]
 queryPathAttackers lang pMap path = 
     let 
@@ -147,7 +154,6 @@ queryPathAttackers lang pMap path =
 -- | TODOs: 
 -- What if to separate Equifinal Paths that disjunctively support `neg l`
 -- However one of them has a circle ? 
--- 1. Change the name to undercut
 queryPathUndercut' :: L.Language -> L.Path -> [L.EquifinalPaths]
 queryPathUndercut' lang p = 
     let 
@@ -184,12 +190,7 @@ queryConcRebuts' lang pMap pathRuls conC =
 
 -- | Sorted by depth of the path. 
 -- Short path came first 
-sortEquifinalPaths :: L.EquifinalPaths -> L.EquifinalPaths 
-sortEquifinalPaths paths = 
-    let 
-        pathLengths = length <$> paths 
-        sortedLength = sort pathLengths
-    in [p | l <- sortedLength, p <- paths, length p == l]
+
 
 equifinalPathForQuery' :: L.Language -> L.Literal -> L.EquifinalPaths
 equifinalPathForQuery' lang conC= 
