@@ -2,18 +2,34 @@ module Main where
 import System.Environment
 import System.Exit
 
-main = getArgs >>= parse >>= putStr . tac
+import qualified Space.Language as L 
+import Utility.PathSearcher 
+import Parser.FileParser
+import Env 
+import Data.List (intercalate)
+
+main = do 
+    args <- getArgs 
+    if length args /= 2
+        then usage >> exit
+        else search args
 
 
-main :: IO ()
-tac  = unlines . reverse . lines
+search [file,query] = do 
+    env <- parseEnv file
+    let 
+        qm = parseLiteralMap env
+        pfmap = parsePreferenceMap env
+        a0 = parseQueryLiteral query qm
+        rules = L.getDefeasibleRules ( envDRuleSpace env) ++ L.getStrictRules (envSRuleSpace env)
+        run = runApp env
+    efp <- run $ querySingleConclusion a0
+    putStrLn . showGroup  $ evenLayer' rules pfmap efp
 
-parse ["-h"] = usage   >> exit
-parse ["-v"] = version >> exit
-parse []     = getContents
-parse fs     = concat `fmap` mapM readFile fs
+showGroup :: [L.EquifinalPaths] -> String
+showGroup group = intercalate "\n" $ show <$> concat group 
 
-usage   = putStrLn "Usage: tac [-vh] [file ..]"
-version = putStrLn "Haskell tac 0.1"
-exit    = exitWith ExitSuccess
-die     = exitWith (ExitFailure 1)
+usage :: IO ()
+usage   = putStrLn "Usage: DT-exe fileName query"
+exit :: IO a
+exit    = exitSuccess

@@ -2,7 +2,7 @@
 # Test cases:
 # For simplicity, all preference below will be computed with (weakest-link, dem)
 ####------------------------------
-# Argument A0_2
+# Argument A1
 # Conclude p1
 #
 r6:p6,p7->p1,1
@@ -30,7 +30,7 @@ r74:p58=>p55,1
 r76:p59=>p58,1
 r78:->p59,1
 ####------------------------------
-# Argument C2_1
+# Argument C1_1
 # Conclude !r71
 #
 r79:p60,p61->!r71,1
@@ -39,13 +39,13 @@ r81:p63=>p61,1
 r82:->p62,1
 r83:->p63,1
 ####--
-# Argument C2_2
+# Argument C1_2
 #
 r84:p64=>p61,1
 r85:p65=>p64,1
 r86:->p65,1
 ####------------------------------
-# Argument C3
+# Argument C2
 # Conclude !74
 #
 r87:p66->!r74,1
@@ -53,7 +53,7 @@ r88:p67=>p66,1
 r89:p68=>p67,1
 r90:->p68,1
 ####------------------------------
-# Argument D2_1
+# Argument D1_1
 # Conclude !p61
 #
 r91:p69,p70->!p61,1
@@ -62,26 +62,26 @@ r93:p72=>p70,1
 r94:->p71,1
 r95:->p72,1
 ####---
-# Argument D2_2
+# Argument D1_2
 # Conclude !p61
 #
 r96:p73=>p70,1
 r97:p74=>p73,1
 r98:->p74,1
 ####------------------------------
-# Argument E0
+# Argument E1
 # Conclude !r93
 #
 r99:=>!r93,1
 ####------------------------------
-# Argument E1
+# Argument E2
 # Conclude !r97
 #
 r100:=>!r97,1
 ####------------------------------
-# Argument E2
+# Argument D2
 # Conclude !p66
 #
-r101:p75=>!p66,1
+r101:p75=>!p66,0
 r102:->p75,1
 

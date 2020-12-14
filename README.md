@@ -1,5 +1,47 @@
 # DT examples
-## 
+#### Build Project and Test
+1. You could build the project to get the executable file.
+    > `stack build --copy-bins`
+1. Demo search file is "./demoExamples/search/demo.txt" \
+   If you would like to query conclusion `p1`, run
+    > `DT-exe ./demoExamples/search/demo.txt p1`
+
+    The query result includes 9 paths, each path represents a argument that related to the query conclusion (direct/indirect support/defend).
+
+    > ```
+    > [[r6: p6 p7->p1],[r7: p8=>p6,r8: p9=>p7],[r9: p10=>p8,r10: p11=>p9],[r11: ->p10,r12: ->p11]]
+    > [[r69: p54 p55->!p7],[r70: p56=>p54,r71: p57=>p55],[r72: ->p56,r73: ->p57]]
+    > [[r79: p60 p61->!r71],[r80: p62=>p60,r81: p63=>p61],[r82: ->p62,r83: ->p63]]
+    > [[r91: p69 p70->!p61],[r92: p71=>p69,r93: p72=>p70],[r94: ->p71,r95: ->p72]]
+    > [[r99: =>!r93]]
+    > [[r91: p69 p70->!p61],[r92: p71=>p69,r96: p73=>p70],[r94: ->p71,r97: p74=>p73],[r98: ->p74]]
+    > [[r100: =>!r97]]
+    > [[r69: p54 p55->!p7],[r70: p56=>p54,r74: p58=>p55],[r72: ->p56,r76: p59=>p58],[r78: ->p59]]
+    > [[r87: p66->!r74],[r88: p67=>p66],[r89: p68=>p67],[r90: ->p68]]
+    > ```
+
+    ![Demo Graph succ](./imgs/search-demo-succ.png)
+
+    **Note:**
+    1. B1_1, B1_2 are equifinal paths, they all conclude `!p7`. 
+        - So the same with C1_1, C1_2 and D1_1 , D1_2. 
+        - Divergence of equifinal paths are blue. 
+    1. Equifinal paths are ordered by the maximum depth from it's conclusion to facts.
+    1. One of even-layer Equifinal Paths is successfully defended is enough. This is why `C1_2` is not in the query result. 
+    1. Equifinal Path of odd layer must all be defeaded and included in the query result. 
+    1. Equifinal Path of odder layer that attack but cannot defeat previous layer argument successfully will not be included in the query result, this is why `D2` is not in the query result.
+    1. This default search relies on (weakest-link + dem) ordering. 
+    1. D2 can not defeat C2 successfully, so that all attacker of A1 can be defeated, thus A1 can be defended indirectly. 
+
+    Changing the preference value of the defeasible rule in D2 from 0 to 1, then D2 defeat C2 and defended B1_2 indirectly. So that B1_2 defeated A1, the query result will be empty.
+
+    ![Demo Graph fail](./imgs/search-demo-fail.png)
+
+
+#### Test (ordering and search) in ghci 
+- coming soon....
+
+
 1. stack ghci
 
 1. demo1 -- test basic single path query 

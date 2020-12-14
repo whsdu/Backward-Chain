@@ -2,3 +2,4 @@
 *~
 Examples/
 .DS_Store
+*.lock
