@@ -113,7 +113,7 @@ oddLayer' :: L.Language -> L.PreferenceMap -> L.EquifinalPaths -> [[L.EquifinalP
 oddLayer' lang pMap ps = 
     let 
         attackGroups = [ (p, queryPathAttackers lang pMap p) | p <- ps , (not . null) (queryPathAttackers lang pMap p)]
-    in if length attackGroups /=  length ps 
+    in if length attackGroups /=  length ps         -- if not every paths in this EFP are attacked by some one then return empty.
         then [] 
         else 
             let 
