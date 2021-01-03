@@ -13,8 +13,6 @@ main = do
     if length args /= 2
         then usage >> exit
         else search args
-
-
 search [file,query] = do 
     env <- parseEnv file
     let 

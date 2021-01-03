@@ -42,9 +42,6 @@ instance Show Env where
 class Has field env where 
     obtain :: env -> field 
 
-grab :: forall field env m . (MonadReader env m , Has field env) => m field 
-grab = asks $ obtain @field 
-
 -- | Same type with different purpose should be wrapped respectively 
 -- so that we they could be declare as instance of some class separately.
 -- In this case `StrictRules` vs `DefeasibleRules` 
@@ -58,6 +55,9 @@ instance Has KnwlPrefMap Env where obtain = envKnwlPrefMap
 
 type UseRuleOnly env = (Has StrictRules env, Has DefeasibleRules env)
 type OrderingContext env = (Has RdPrefMap env, Has KnwlPrefMap env)
+
+grab :: forall field env m . (MonadReader env m , Has field env) => m field 
+grab = asks $ obtain @field 
 
 newtype App a = App 
     { unApp :: ReaderT Env IO a 
