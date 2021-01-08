@@ -45,9 +45,9 @@
 1. stack ghci
 
 1. demo1 -- test basic single path query 
-env1 <- parseEnv "./Examples/test/demo1.txt"
+env1 <- parseEnv "./demoExamples/Ordering/demo1.txt"
 run1 = runApp env1
-lMap = parseLiteralMap env
+lMap = parseLiteralMap env1
 q1 = parseQueryLiteral "p1" lMap
 q2 = parseQueryLiteral "!p2" lMap
 run $ querySingleConclusion q1
