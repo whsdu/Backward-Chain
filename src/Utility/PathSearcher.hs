@@ -45,25 +45,30 @@ queryEquifinalPathSection bodies = do
                 pa <- paths
                 a <- ls 
                 pure $  pa:a 
-
-queryEquifinalPaths :: 
+{-
+EFP  
+-}
+equifinalPaths :: 
     ( MonadReader env m
     , UseRuleOnly env 
     , MonadIO m 
     ) => L.Language -> m L.EquifinalPaths 
-queryEquifinalPaths rules = do 
+equifinalPaths rules = do 
     let bodies = concat $ L.body <$> rules 
     if null bodies
         then pure [[rules]]
         else 
             do 
                 equifinality <- queryEquifinalPathSection bodies 
-                rs <- mapM queryEquifinalPaths equifinality 
+                rs <- mapM equifinalPaths equifinality 
                 pure $ 
                     do
                         r <- concat rs 
                         pure $ rules : r
 
+{-
+EFP for single conclusion. 
+-}
 querySingleConclusion :: 
     ( MonadReader env m
     , UseRuleOnly env 
@@ -73,9 +78,26 @@ querySingleConclusion conC = do
     cs <- concludeBy conC 
     let 
         dos = (:[]) <$> cs 
-    rs <- mapM queryEquifinalPaths dos 
+    rs <- mapM equifinalPaths dos 
     pure $ sort $ concat rs 
 
+{--}
+rebut' :: 
+    ( MonadReader env m 
+    , Has L.Language env 
+    , UseRuleOnly env 
+    , MonadIO m
+    ) => L.Path -> m [(L.Literal,L.EquifinalPaths)]
+rebut' path = do 
+    lang <- grab @L.Language
+    let 
+        defeasible = [r | r <- concat path , L.imp r == M.D]
+        rebutPoints = L.conC <$> defeasible
+    attackEFP <- mapM querySingleConclusion ( M.neg <$> rebutPoints)
+    let 
+        r = zip rebutPoints attackEFP
+    pure  [l | l <- r, snd l /= []]
+        
 
 {- Backward Chaining Search
 Given: 

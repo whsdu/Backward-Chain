@@ -5,6 +5,7 @@ module Utility.Ordering where
 
 import qualified Space.Meta as M 
 import qualified Space.Language as L 
+
 import Env 
 
 import qualified Data.HashMap.Strict as Map 
@@ -58,6 +59,9 @@ getPreferMap = do
     let prefMap = Map.union rdPreferenceMap knPreferenceMap
     pure prefMap 
 
+
+
+    
 
 
 -- | Last-Link : select particular set of components of two Arguments(Paths)

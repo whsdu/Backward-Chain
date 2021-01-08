@@ -38,18 +38,84 @@
     ![Demo Graph fail](./imgs/search-demo-fail.png)
 
 
-#### Test (ordering and search) in ghci 
+## Test (ordering and search) in ghci 
+
+### Env 
+`Env` Contains context information of computing for computing the query result: 
+```
+data Env = Env 
+    { envLangSpace :: Language            -- 1 
+    , envSRuleSpace :: StrictRules        -- 2 
+    , envDRuleSpace :: DefeasibleRules    -- 3 
+    , envArguSpace :: ArgumentationSpace  -- 4 
+    , envRdPrefMap:: RdPrefMap            -- 5 
+    , envKnwlPrefMap :: KnwlPrefMap       -- 6
+    } 
+```
+1. Language Space `L`.
+2. Strict Rules      `S`.
+3. Defeasible Rules     `D`. 
+4. Reserved for future use. 
+5. Predefined Preference Ordering of defeasible rules $\leq_d$. 
+6. Predefined Preference Ordering of premises $\leq_o$. 
+
 - coming soon....
 
 
 1. stack ghci
 
-1. demo1 -- test basic single path query 
+### Demo 1 
+- Demo 1 test basic single path query 
+
+![Ordering: Demo 1](./imgs/ordering-demo1.png)
+
+1. Read context information from file
+    ```
+    env1 <- parseEnv "./demoExamples/Ordering/demo1.txt"
+    ``` 
+2. Prepare application runner with context `env1`.
+    ```
+    run1 = runApp env1
+    ```
+3. Get literals the represent proposition `p1` and `!p2`
+    ```
+    lMap = parseLiteralMap env1
+    l1 = parseQueryLiteral "p1" lMap
+    l2 = parseQueryLiteral "!p2" lMap
+    ```
+    `l1` and `l2` are of type `Literal`. 
+
+    ```
+    > l1
+    p1
+    > :info l1     
+    l1 :: Literal       
+    > l2
+    p2
+    > :info l2       
+    l2 :: Literal    
+    ```
+4. Get `EFP`s that conclude "p1" and "!p2". 
+    ```
+    efp1 <- run1 $ querySingleConclusion l1
+    efp2 <- run1 $ querySingleConclusion l2 
+    ```
+    We have two `EFP`s that conclude `p1` and `!p2` respectively. 
+    ```
+    > efp1
+    [[[r1: p2 p3=>p1],[r2: p4 p5=>p2,r3: p6 p7=>p3],[r4: =>p4,r5: =>p5,r6: =>p6,r7: =>p7]]]
+    >efp2
+    [[[r8: p8 p9=>!p2],[r9: p10=>p8,r10: p11=>p9],[r11: =>p10,r12: =>p11]]]
+    ```
+5. Start testing Ordering Function. Because there is only one element in `efp1` and `efp2` respectively, we use `head` to get this only path from `EFP`.
+    ```
+    ```
+
 env1 <- parseEnv "./demoExamples/Ordering/demo1.txt"
 run1 = runApp env1
 lMap = parseLiteralMap env1
-q1 = parseQueryLiteral "p1" lMap
-q2 = parseQueryLiteral "!p2" lMap
+l1 = parseQueryLiteral "p1" lMap
+l2 = parseQueryLiteral "!p2" lMap
 run $ querySingleConclusion q1
 run $ querySingleConclusion q2
 
