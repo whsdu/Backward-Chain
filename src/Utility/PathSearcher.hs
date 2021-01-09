@@ -46,7 +46,7 @@ queryEquifinalPathSection bodies = do
                 a <- ls 
                 pure $  pa:a 
 {-
-EFP  
+EFP of a given set of rules
 -}
 equifinalPaths :: 
     ( MonadReader env m
@@ -81,23 +81,7 @@ querySingleConclusion conC = do
     rs <- mapM equifinalPaths dos 
     pure $ sort $ concat rs 
 
-{--}
-rebut' :: 
-    ( MonadReader env m 
-    , Has L.Language env 
-    , UseRuleOnly env 
-    , MonadIO m
-    ) => L.Path -> m [(L.Literal,L.EquifinalPaths)]
-rebut' path = do 
-    lang <- grab @L.Language
-    let 
-        defeasible = [r | r <- concat path , L.imp r == M.D]
-        rebutPoints = L.conC <$> defeasible
-    attackEFP <- mapM querySingleConclusion ( M.neg <$> rebutPoints)
-    let 
-        r = zip rebutPoints attackEFP
-    pure  [l | l <- r, snd l /= []]
-        
+
 
 {- Backward Chaining Search
 Given: 

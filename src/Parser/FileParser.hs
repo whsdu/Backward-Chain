@@ -30,7 +30,10 @@ data Knowledge = Knowledge
 
 type KnowledgeSpace = [Knowledge]
 
-
+{-
+TODOs:
+Language space in env does not contains neg of rules. 
+-}
 parseEnv :: FilePath -> IO Env
 parseEnv filePath = do 
     k <- fileToKnowledge filePath

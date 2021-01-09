@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 64e55a55474f38ac791eb3da128458cca9b68254897931ad84f61fbdbbd1eb8c
+-- hash: c8db2f03f6d57bb16d8068152d37e2b2f2a1f6041e937da7436c147566edfbf9
 
 name:           DT
 version:        0.1.0.0
@@ -44,6 +44,7 @@ library
       Space.Language
       Space.Meta
       Utility.Argumentation
+      Utility.DemoHelp
       Utility.Language
       Utility.Ordering
       Utility.PathSearcher

@@ -38,9 +38,16 @@
     ![Demo Graph fail](./imgs/search-demo-fail.png)
 
 
-## Test (ordering and search) in ghci 
+## Demo
 
-### Env 
+#### Demo Illustration  
+The file format is as shown below. Each demo file is equivalent to a set of paths.
+![Demo Graph fail](./imgs/illustration.png)
+
+![Demo Graph fail](./imgs/illustration-simplified.png)
+    Notes, subpath that being attacked will not be shown in this. For example. sub path of `p2` in path `p1` is being attacked by path of `!p2`, it will not be drew independently. 
+
+#### Env 
 `Env` Contains context information of computing for computing the query result: 
 ```
 data Env = Env 
@@ -59,172 +66,229 @@ data Env = Env
 5. Predefined Preference Ordering of defeasible rules $\leq_d$. 
 6. Predefined Preference Ordering of premises $\leq_o$. 
 
-- coming soon....
+### Ordering Demo  
+Each rule and premise is associated with an integer. The priority orderings relation is equivalent to the ordering of the associated integer. 
 
-
-1. stack ghci
-
-### Demo 1 
-- Demo 1 test basic single path query 
-
-![Ordering: Demo 1](./imgs/ordering-demo1.png)
+#### Demo1
+```
+stack ghci
+```
+![Ordering: Demo 1](./imgs/illustration.png)
 
 1. Read context information from file
     ```
-    env1 <- parseEnv "./demoExamples/Ordering/demo1.txt"
+    env1 <- parseEnv "./demoExamples/ordering/demo1.txt"
     ``` 
-2. Prepare application runner with context `env1`.
+    `env1` contains all context information of this argumentation system, `L` : LanguageSpace, `R` : Strict Rules + Defeasible Rules, `Priority Orderings` : Preference Map . 
+    ```
+    > env1
+    LanguageSpace: [!p2,p1,p10,p11,p2,p3,p4,p5,p6,p7,p8,p9,r10: p11=>p9,r1: p2 p3=>p1,r11: =>p10,r8: p8 p9=>!p2,r7: =>p7,r6: =>p6,r4: =>p4,r3: p6 p7=>p3,r12: =>p11,r2: p4 p5=>p2,r9: p10=>p8,r5: =>p5]
+    Strict Rules: []
+    Defeasible Rules: [r10: p11=>p9,r1: p2 p3=>p1,r11: =>p10,r8: p8 p9=>!p2,r7: =>p7,r6: =>p6,r4: =>p4,r3: p6 p7=>p3,r12: =>p11,r2: p4 p5=>p2,r9: p10=>p8,r5: =>p5]
+    ArgumentationSpace: []
+    Preference Map of defeasible rules: fromList [("r10",1),("r1",1),("r8",2),("r3",1),("r2",1),("r9",1)]
+    Preference Map of axiom and ordinary knowledge: fromList [("r11",1),("r7",2),("r6",2),("r4",2),("r12",2),("r5",2)]
+    ```
+1. Prepare application runner with context `env1`. So that we could use this runner to run context related functions. 
     ```
     run1 = runApp env1
     ```
-3. Get literals the represent proposition `p1` and `!p2`
+1. Get literals the represents the query  proposition `p1`. 
     ```
     lMap = parseLiteralMap env1
     l1 = parseQueryLiteral "p1" lMap
-    l2 = parseQueryLiteral "!p2" lMap
     ```
-    `l1` and `l2` are of type `Literal`. 
+    `l1` is of type `Literal`. 
 
     ```
     > l1
     p1
     > :info l1     
     l1 :: Literal       
-    > l2
-    p2
-    > :info l2       
-    l2 :: Literal    
     ```
-4. Get `EFP`s that conclude "p1" and "!p2". 
+1. Get `EFP` that concludes "p1". 
     ```
     efp1 <- run1 $ querySingleConclusion l1
-    efp2 <- run1 $ querySingleConclusion l2 
     ```
-    We have two `EFP`s that conclude `p1` and `!p2` respectively. 
+    Now we have the `EFP` that concludes our query proposition `p1`.  
     ```
     > efp1
     [[[r1: p2 p3=>p1],[r2: p4 p5=>p2,r3: p6 p7=>p3],[r4: =>p4,r5: =>p5,r6: =>p6,r7: =>p7]]]
-    >efp2
-    [[[r8: p8 p9=>!p2],[r9: p10=>p8,r10: p11=>p9],[r11: =>p10,r12: =>p11]]]
     ```
-5. Start testing Ordering Function. Because there is only one element in `efp1` and `efp2` respectively, we use `head` to get this only path from `EFP`.
+1. Check if Paths in $EFP_{p1}$ is attacked by any other $EFP$. 
     ```
+    > r <- run1 $ rebutDemo' (head efp1)
+    > r
+    [(p2,[[[r8: p8 p9=>!p2],[r9: p10=>p8,r10: p11=>p9],[r11: =>p10,r12: =>p11]]])]
     ```
+    The output indicates $PAth_{!p2}$ = `[[r8: p8 p9=>!p2],[r9: p10=>p8,r10: p11=>p9],[r11: =>p10,r12: =>p11]]`, it attacks the only path in $EFP_{p1}$ at $p2$. 
+    >`head efp1` gets the only path in $EFP_{p1}$. 
+    > `rebutDemo'` is auxiliary function defined in module `Utility.DemoHelp`.
+1. Note: There is only one path in each $EFP$ in all ordering demos. So, I will use $path_{p1} = Path_{p1}$ to represent $EFP_{p1}$, $path_{np2} = Path_{!p2}$ to represent $EFP_{!p2}$ and so on. 
+    ```
+    p2 = fst . head $ r 
+    path_np2 = head . snd . head $ r
+    path_p2 <- fmap head $ run1 $ querySingleConclusion p2
+    ```
+![Ordering: Demo 1](./imgs/ordering-demo1.png)
 
-env1 <- parseEnv "./demoExamples/Ordering/demo1.txt"
-run1 = runApp env1
-lMap = parseLiteralMap env1
-l1 = parseQueryLiteral "p1" lMap
-l2 = parseQueryLiteral "!p2" lMap
-run $ querySingleConclusion q1
-run $ querySingleConclusion q2
+7. Start testing Ordering Function on $path_{np2}$ and $path_{p2}$.
+    `last-link` selects the last-defeasible rules, in this case `r8` from $path_np2$ and `r2` from $path_p2$. 
+    ```
+    > run1 $ lastDem path_np2 path_p2
+    True
+    > run1 $ lastEli path_np2 path_p2
+    True 
+    ```
+    In this case, `weakest-link` select all defeasible rules and ordinary premise and compute the preference orderings respectively. `Eli` requires all component of $path_{np2}$ no less preferred than same type of components of $path_{p2}$. 
+    ```
+    > run1 $ weakestDem path_np2 path_p2
+    True
+    > run1 $ weakestEli path_np2 path_p2
+    False
+    ```
+1. This section focus on illustrating the ordering function. Function `orderingHelper` integrated above processes and return the path that attacks our query and the subpath being attacked of our query. 
+    ```
+    > runner = getRunner "./demoExamples/ordering/demo1.txt"
+    > (attacker,target) <- orderingHelper "./demoExamples/ordering/demo1.txt" "p1"
+    > attacker
+    [[r8: p8 p9=>!p2],[r9: p10=>p8,r10: p11=>p9],[r11: =>p10,r12: =>p11]]
+    > target
+    [[r2: p4 p5=>p2],[r4: =>p4,r5: =>p5]]
+    > runner $ weakestEli attacker target
+    False
+    ```
+#### Demo 2: 
+```
+stack ghci
+```
+![ordering-demo2-dem](./imgs/ordering-demo2-dem.png)
+1. Get runner of demo2-dem
+```
+> runner = getRunner "./demoExamples/ordering/demo2-dem.txt"
+```
+2. $Path_{p1}$ is rebutted on $p4$. 
+```
+> (attacker,target) <- orderingHelper "./demoExamples/ordering/demo2-dem.txt" "p1"
+> attacker
+[[r8: p8 p9->!p4],[r9: p10->p8,r10: p11->p9],[r11: =>p10,r12: =>p11]]
+> target
+[[r4: =>p4]]
+> runner $ weakestEli attacker target
+False
+> runner $ weakestDem attacker target
+True
+```
+`weakest` method selects all defeasible components (rules and ordinary premises). If `B` attacks `A` and `B` & `A` are all strict, the only possible scenario is `A` is an ordinary premise.In this demo, `weakest` and `last` will select the same set of defeasible components.
 
-1. test Ordering issue
-env1 <- parseEnv "./Examples/test/demo1.txt"
-env3d <- parseEnv "./Examples/test/demo3-dem.txt"
-fMap = parseLiteralMap env1
-qc = parseQueryLiteral "p1" fMap
-p1 <- runApp env1 $ querySingleConclusion qc
-p3 <- runApp env3d $ querySingleConclusion qc
 
-1. test Preferable in demo4-eli
-import Data.HashMap.Strict
+![ordering-demo2-dem](./imgs/ordering-demo2-eli.png)
+1. Get a runner of modified demo2. 
+```
+runner = getRunner "./demoExamples/ordering/demo2-eli.txt"
+```
+2. The change of irrelevant preference will not affect the result. 
+```
+> (attacker, target) <- orderingHelper "./demoExamples/ordering/demo2-eli.txt" "p1"
+> runner $ weakestEli attacker target
+True
+> runner $ weakestDem attacker target
+True
+```
+`weakest` method still return same set of defeasible components. In this modified example, the preference of $p10$ changed from 1 to 2, therefore, both `weakestEli` and `weakestDem` will return `True`.
 
-env4 <- parseEnv "./Examples/test/demo4-eli.txt"
-preMap =union ( (getRdPrefMap . envRdPrefMap) env4) ( (getKnwlPrefMap . envKnwlPrefMap ) env4)
-fmap4 = parseLiteralMap env4
-qb = parseQueryLiteral "p9" fmap4
-qc = parseQueryLiteral "!p9" fmap4
-rb <- runApp env4 $ querySingleConclusion qb
-rc <- runApp env4 $ querySingleConclusion qc
 
-lastLink preMap eli (head rc) (head rb)
-weakestLink preMap eli (head rc) (head rb)
+![ordering-demo3-dem](./imgs/ordering-demo3-dem.png)
+1. Get a runner of demo3.
+```
+> runner = getRunner "./demoExamples/ordering/demo3-dem.txt"
+```
+1. In this demo, `weakest-link` and `last-link` will select same set of defeasible components.
+```
+> (attacker, target) <- orderingHelper "./demoExamples/ordering/demo3-dem.txt" "p1"
+> runner $ weakestDem attacker target
+True
+> runner $ weakestEli attacker target
+False
+```
 
-qd = parseQueryLiteral "p21" fmap4
-qe = parseQueryLiteral "!p21" fmap4
-rd <- runApp env4 $ querySingleConclusion qd
-re <- runApp env4 $ querySingleConclusion qe
+![ordering-demo3-eli](./imgs/ordering-demo3-eli.png)
+1. Get a runner of modified demo3.
+```
+> runner = getRunner "./demoExamples/ordering/demo3-eli.txt"
+```
+1. In this demo, `weakest-link` and `last-link` will select same set of defeasible components. Irrelevant component will not affect the computation. Because the preference of $r9$ changed from 1 to 2, both `Eli` and `Dem` will be `True`.
+```
+> (attacker, target) <- orderingHelper "./demoExamples/ordering/demo3-eli.txt" "p1"
+> runner $ weakestDem attacker target
+True
+> runner $ weakestEli attacker target
+True
+```
 
-lastLink preMap eli (head re) (head rd)
-weakestLink preMap eli (head re) (head rd)
+![ordering-demo4-dem](./imgs/ordering-demo4-dem.png)
+1. Get a runner of  demo4.
+```
+> runner = getRunner "./demoExamples/ordering/demo4-dem.txt"
+```
+1. 
+```
+(attack, target) <- orderingHelper "./demoExamples/ordering/demo4-dem.txt" "p9"
+> runner $ lastEli attack target
+False
+> runner $ lastDem attack target
+True
+> runner $ weakestEli attack target
+False
+> runner $ weakestDem attack target
+False
+```
+1. 
+```
+(attack, target) <- orderingHelper "./demoExamples/ordering/demo4-dem.txt" "p21"
+> runner $ lastDem attack target
+True
+> runner $ lastEli attack target
+False
+> runner $ weakestDem attack target
+True
+> runner $ weakestEli attack target
+False
+```
 
-1. test Preferable in demo4-dem
-env4 <- parseEnv "./Examples/test/demo4-dem.txt"
-preMap =union ( (getRdPrefMap . envRdPrefMap) env4) ( (getKnwlPrefMap . envKnwlPrefMap ) env4)
-fmap4 = parseLiteralMap env4
-qb = parseQueryLiteral "p9" fmap4
-qc = parseQueryLiteral "!p9" fmap4
-rb <- runApp env4 $ querySingleConclusion qb
-rc <- runApp env4 $ querySingleConclusion qc
+![ordering-demo4-eli](./imgs/ordering-demo4-eli.png)
 
-lastLink preMap dem (head rc) (head rb)
-weakestLink preMap dem (head rc) (head rb)
+1. Get a runner of modified demo4.
+```
+> runner = getRunner "./demoExamples/ordering/demo4-eli.txt"
+```
+1. 
+```
+(attack, target) <- orderingHelper "./demoExamples/ordering/demo4-eli.txt" "p9"
+> runner $ lastDem attack target
+True
+> runner $ lastEli attack target
+True
+> runner $ weakestDem attack target
+True
+> runner $ weakestEli attack target
+False
+```
+1. 
+```
+(attack, target) <- orderingHelper "./demoExamples/ordering/demo4-eli.txt" "p21"
+> runner $ lastDem attack target
+True
+> runner $ lastEli attack target
+True
+> runner $ weakestDem attack target
+True
+> runner $ weakestEli attack target
+True
+```
 
-qd = parseQueryLiteral "p21" fmap4
-qe = parseQueryLiteral "!p21" fmap4
-rd <- runApp env4 $ querySingleConclusion qd
-re <- runApp env4 $ querySingleConclusion qe
-
-lastLink preMap dem (head re) (head rd)
-weakestLink preMap dem (head re) (head rd)
-
-1. test demo2-dem
-env2 <- parseEnv "./Examples/test/demo2-dem.txt"
-preMap =union ( (getRdPrefMap . envRdPrefMap) env2) ( (getKnwlPrefMap . envKnwlPrefMap ) env2)
-fmap2 = parseLiteralMap env2
-qa = parseQueryLiteral "p4" fmap2
-qb = parseQueryLiteral "!p4" fmap2
-rb <- runApp env2 $ querySingleConclusion qa
-rc <- runApp env2 $ querySingleConclusion qb
-
-weakestDem preMap  (head rc) (head rb)
-weakestEli preMap (head rc) (head rb)
-
-lastDem preMap (head rc) (head rb)
-lastEli  preMap (head rc) (head rb)
-
-1. test demo2-eli
-env2 <- parseEnv "./Examples/test/demo2-eli.txt"
-preMap =union ( (getRdPrefMap . envRdPrefMap) env2) ( (getKnwlPrefMap . envKnwlPrefMap ) env2)
-fmap2 = parseLiteralMap env2
-qa = parseQueryLiteral "p4" fmap2
-qb = parseQueryLiteral "!p4" fmap2
-ra <- runApp env2 $ querySingleConclusion qa
-rb <- runApp env2 $ querySingleConclusion qb
-
-weakestDem preMap  (head rb) (head ra)
-weakestEli preMap (head rb) (head ra)
-
-lastDem preMap (head rb) (head ra)
-lastEli  preMap (head rb) (head ra)
-
-1. test demo3-dem
-env2 <- parseEnv "./Examples/test/demo3-dem.txt"
-preMap =union ( (getRdPrefMap . envRdPrefMap) env2) ( (getKnwlPrefMap . envKnwlPrefMap ) env2)
-fmap2 = parseLiteralMap env2
-qa = parseQueryLiteral "p2" fmap2
-qb = parseQueryLiteral "!p2" fmap2
-ra <- runApp env2 $ querySingleConclusion qa
-rb <- runApp env2 $ querySingleConclusion qb
-
-weakestDem preMap  (head rb) (head ra)
-weakestEli preMap (head rb) (head ra)
-
-lastDem preMap (head rb) (head ra)
-lastEli  preMap (head rb) (head ra)
-
-1. test demo3-eli
-env2 <- parseEnv "./Examples/test/demo3-eli.txt"
-preMap =union ( (getRdPrefMap . envRdPrefMap) env2) ( (getKnwlPrefMap . envKnwlPrefMap ) env2)
-fmap2 = parseLiteralMap env2
-qa = parseQueryLiteral "p2" fmap2
-qb = parseQueryLiteral "!p2" fmap2
-ra <- runApp env2 $ querySingleConclusion qa
-rb <- runApp env2 $ querySingleConclusion qb
-
-weakestDem preMap  (head rb) (head ra)
-weakestEli preMap (head rb) (head ra)
-
-lastDem preMap (head rb) (head ra)
-lastEli  preMap (head rb) (head ra)
+heuristic information 
+weakest + dem most promising to attack success
+last + dem
+last + eli
+weakest + eli most promising to attack fail 

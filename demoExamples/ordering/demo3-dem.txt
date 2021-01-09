@@ -4,7 +4,6 @@
 # Test cases:
 # 1. Query p1 (WL + dem) will return Nothing
 # 2. Query p1 (WL + eli) A1 + A2
-# 3. Query !p2 (WL + dem) will return A2 and P2(sub argument of A1)
 ####
 # Argument A1
 #

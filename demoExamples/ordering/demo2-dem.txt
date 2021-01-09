@@ -4,7 +4,6 @@
 # Test cases:
 # 1. Query p1 (WL + dem) will return Nothing
 # 2. Query p1 (WL + eli) A1 + A2
-# 3. Query !p2 (WL + dem) will return A2 and P2(sub argument of A1)
 ####
 # Argument A1
 #
@@ -16,10 +15,10 @@ r5:=>p5,2
 r6:=>p6,2
 r7:=>p7,2
 ####------------------------------
-# Argument A2 rebut A1 on p2
+# Argument A2 rebut A1 on p4
 # Weakest Link + Strict
-# Eli --> attack fail
-# Dem --> attack succ : r11 >= r4.r5,r6,r7
+# Eli --> attack fail	r11 < r4
+# Dem --> attack succ : r12 = r4
 #
 r8:p8,p9->!p4,2
 r9:p10->p8,1
