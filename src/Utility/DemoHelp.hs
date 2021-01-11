@@ -12,7 +12,7 @@ import qualified Space.Language as L
 import qualified Space.Meta as M 
 
 import qualified Utility.Language as LU 
-import qualified Utility.PathSearcher as PS
+import qualified Utility.Path as PS
 import qualified Utility.Ordering  as O
 import qualified Parser.FileParser as FP
 

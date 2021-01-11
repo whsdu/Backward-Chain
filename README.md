@@ -287,8 +287,12 @@ True
 True
 ```
 
-heuristic information 
+heuristic information
+When there is no information about attacker and target. 
+The chance of a successful attack is decreasing:
 weakest + dem most promising to attack success
 last + dem
 last + eli
 weakest + eli most promising to attack fail 
+
+actual solution goes in parallel: need to update to a parallel version.  

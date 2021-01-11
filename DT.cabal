@@ -47,7 +47,7 @@ library
       Utility.DemoHelp
       Utility.Language
       Utility.Ordering
-      Utility.PathSearcher
+      Utility.Path
   other-modules:
       Paths_DT
   hs-source-dirs:

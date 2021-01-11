@@ -39,11 +39,11 @@ type PreferenceMap = Map.HashMap Name Int
 newtype RdPrefMap = RdPrefMap {getRdPrefMap :: Map.HashMap Name Int}
 newtype KnwlPrefMap = KnwlPrefMap { getKnwlPrefMap :: Map.HashMap Name Int}
 -- | `L` language is a set of `Literal`
+
 type Language = [Literal]
-
 type PathSection = Language 
-type Path = [PathSection]
 
+type Path = [PathSection]
 type EquifinalPathSections = [PathSection]
 
 type EquifinalPaths = [Path]

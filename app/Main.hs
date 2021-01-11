@@ -3,8 +3,12 @@ import System.Environment
 import System.Exit
 
 import qualified Space.Language as L 
-import Utility.PathSearcher 
+import Utility.Path 
 import Parser.FileParser
+    ( parseEnv,
+      parseLiteralMap,
+      parsePreferenceMap,
+      parseQueryLiteral )
 import Env 
 import Data.List (intercalate)
 
