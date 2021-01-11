@@ -1,4 +1,4 @@
-module Query where 
+module Utility.Query where 
 
 -- This module is the rewrite of Path 
 
