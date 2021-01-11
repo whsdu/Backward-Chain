@@ -43,6 +43,15 @@ parseEnv filePath = do
         r = chainingRule l 
     pure $ mkEnv r rdMap knMap 
 
+stringToEnv :: String -> IO Env 
+stringToEnv content = do 
+    k <- stringToKnowledge content 
+    (rdMap, knMap) <- stringToPrefMap content 
+    let 
+        l = k2l k 
+        r = chainingRule l 
+    pure $ mkEnv r rdMap knMap 
+
 parseLiteralMap :: Env -> Map.HashMap M.Name L.Literal
 parseLiteralMap env = 
     let 
@@ -76,18 +85,22 @@ fileToKnowledge filePath = do
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
     pure $ parseWord <$> removeComment (lines contents)
-  where 
-    parseWord :: String -> Knowledge
-    parseWord w = 
-        let 
-            [ruleName,ruleBody] = splitOn ":" w 
-            impName 
-                | '-' `elem` ruleBody = "->"
-                | otherwise = "=>"
-            [premies,conC] = splitOn impName ruleBody 
-            premisesName = splitOn "," premies 
-            [conclusionName,preferName] = splitOn "," conC
-        in Knowledge ruleName premisesName impName conclusionName preferName
+
+stringToKnowledge :: String -> IO KnowledgeSpace 
+stringToKnowledge content =  pure $ parseWord <$> removeComment (lines content)
+
+parseWord :: String -> Knowledge
+parseWord w = 
+    let 
+        [ruleName,ruleBody] = splitOn ":" w 
+        impName 
+            | '-' `elem` ruleBody = "->"
+            | otherwise = "=>"
+        [premies,conC] = splitOn impName ruleBody 
+        premisesName = splitOn "," premies 
+        [conclusionName,preferName] = splitOn "," conC
+    in Knowledge ruleName premisesName impName conclusionName preferName
+
 
 k2l :: KnowledgeSpace -> L.LanguageMap 
 k2l knowledges = constructLS knowledges Map.empty
@@ -176,6 +189,23 @@ fileToPrefMap :: FilePath -> IO (L.RdPrefMap, L.KnwlPrefMap)
 fileToPrefMap filePath = do 
     handle <- openFile filePath  ReadMode
     contents <- hGetContents handle 
+    let 
+        records = removeComment( lines contents )
+        premisesLines = [r | r <- records,(":=" `isInfixOf` pack r) || (":-" `isInfixOf` pack r)]
+        rulesLines = [r | r <- records, r `notElem` premisesLines && not ("->" `isInfixOf` pack r)]
+        rdMap = L.RdPrefMap $ Map.fromList $ parsePre <$> rulesLines
+        kwMap = L.KnwlPrefMap $ Map.fromList $ parsePre <$> premisesLines
+    pure (rdMap,kwMap)
+  where 
+      parsePre :: String -> (M.Name,Int)
+      parsePre s = 
+          let 
+              name = head $ splitOn ":" s 
+              pre = read . last $ splitOn "," s
+          in (name,pre)
+
+stringToPrefMap :: String -> IO (L.RdPrefMap, L.KnwlPrefMap)
+stringToPrefMap contents = do 
     let 
         records = removeComment( lines contents )
         premisesLines = [r | r <- records,(":=" `isInfixOf` pack r) || (":-" `isInfixOf` pack r)]
