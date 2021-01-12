@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
+
 module Utility.Ordering where 
 
 import qualified Space.Meta as M 
@@ -12,6 +13,47 @@ import qualified Data.HashMap.Strict as Map
 import Control.Monad.Reader (MonadReader)
 import Control.Monad.IO.Class (MonadIO)
 
+-- isPreferableThan ::
+--     ( MonadReader env m 
+--     , OrderingContext env
+--     , MonadIO m 
+--     ) => L.Path -> L.Path -> m Bool 
+-- isPreferableThan a b = undefined 
+
+lastELi :: L.PreferenceMap  -> L.Path -> L.Path -> Bool 
+lastELi = lastLink eli 
+
+lastDem :: L.PreferenceMap ->  L.Path -> L.Path -> Bool 
+lastDem = lastLink dem 
+
+weakestEli :: L.PreferenceMap  -> L.Path -> L.Path -> Bool 
+weakestEli = weakestLink eli 
+
+weakestDem :: L.PreferenceMap  -> L.Path -> L.Path -> Bool 
+weakestDem = weakestLink dem 
+
+lastEliM :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+lastEliM argA argB = do 
+    prefMap <- getPreferMap
+    pure $ lastLink eli prefMap argA argB 
+
+lastDemM ::( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+lastDemM argA argB =  do 
+    prefMap <- getPreferMap
+    pure $ lastLink dem prefMap argA argB
+
+weakestEliM :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+weakestEliM argA argB = do 
+    prefMap <- getPreferMap
+    pure $ weakestLink eli prefMap argA argB
+
+weakestDemM :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
+weakestDemM argA argB = do 
+    prefMap <- getPreferMap
+    pure $ weakestLink dem prefMap argA argB
+
+{- Auxiliary function help to union preference map of defeasible rule and ordinary premises-}
+
 -- | check if `argA` is preferable than `argB`
 -- TODOs: maybe could move: 
 -- 1. Links type 
@@ -20,34 +62,6 @@ import Control.Monad.IO.Class (MonadIO)
 type Orderings = L.PreferenceMap -> L.Language -> L.Language -> Bool 
 type MonadOrderings = forall m . MonadIO m => L.Path -> L.Path -> m Bool 
 
--- isPreferableThan ::
---     ( MonadReader env m 
---     , OrderingContext env
---     , MonadIO m 
---     ) => L.Path -> L.Path -> m Bool 
--- isPreferableThan a b = undefined 
-
-lastEli :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
-lastEli argA argB = do 
-    prefMap <- getPreferMap
-    pure $ lastLink prefMap eli argA argB 
-
-lastDem ::( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
-lastDem argA argB =  do 
-    prefMap <- getPreferMap
-    pure $ lastLink prefMap dem argA argB
-
-weakestEli :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
-weakestEli argA argB = do 
-    prefMap <- getPreferMap
-    pure $ weakestLink prefMap eli argA argB
-
-weakestDem :: ( MonadReader env m , OrderingContext env, MonadIO m ) => L.Path -> L.Path -> m Bool 
-weakestDem argA argB = do 
-    prefMap <- getPreferMap
-    pure $ weakestLink prefMap dem argA argB
-
-{- Auxiliary function help to union preference map of defeasible rule and ordinary premises-}
 getPreferMap :: 
     ( MonadReader env m 
     , OrderingContext env
@@ -60,14 +74,10 @@ getPreferMap = do
     pure prefMap 
 
 
-
-    
-
-
 -- | Last-Link : select particular set of components of two Arguments(Paths)
 -- Check the preferable relation with certain method (dem or eli)
-lastLink :: L.PreferenceMap -> Orderings -> L.Path -> L.Path -> Bool 
-lastLink pm orderings argA argB
+lastLink :: Orderings -> L.PreferenceMap -> L.Path -> L.Path -> Bool 
+lastLink orderings pm argA argB
     | null ldrA && null ldrB = orderings pm (axiA ++ ordiA) (axiB ++ ordiB)
     | null ldrA = True 
     | otherwise = orderings pm ldrA ldrB
@@ -79,8 +89,8 @@ lastLink pm orderings argA argB
     ordiA = pathToOrdinaryFacts argA 
     ordiB = pathToOrdinaryFacts argB
 
-weakestLink :: L.PreferenceMap -> Orderings -> L.Path -> L.Path -> Bool 
-weakestLink pm orderings pathA pathB 
+weakestLink :: Orderings ->  L.PreferenceMap ->  L.Path -> L.Path -> Bool 
+weakestLink orderings pm pathA pathB 
     | isStrictPath pathA && isStrictPath pathB = orderings pm ordiA ordiB 
     | isFirmPath pathA && isFirmPath pathB = orderings pm drA drB
     | otherwise = orderings pm ordiA ordiB && orderings pm drA drB 

@@ -7,13 +7,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE RankNTypes #-}
 
 
 module Env where 
 
 import Control.Monad.Reader 
 
-import Space.Language (Language,StrictRules(..),DefeasibleRules(..), PreferenceMap, RdPrefMap(..), KnwlPrefMap(..)) 
+import Space.Language (Language,Path, StrictRules(..),DefeasibleRules(..), PreferenceMap, RdPrefMap(..), KnwlPrefMap(..)) 
 import Space.Argumentation (ArgumentationSpace ) 
 
 -- | TODOs: 
@@ -21,6 +22,7 @@ import Space.Argumentation (ArgumentationSpace )
 -- 2. do we really need the envArguSpace here ? 
 -- 3. a new PrefSpace is needed, this should be a function that given to literal and return true if
 -- the first is at least prefer as the snd arg.
+
 data Env = Env 
     { envLangSpace :: Language 
     , envSRuleSpace :: StrictRules
@@ -28,6 +30,7 @@ data Env = Env
     , envArguSpace :: ArgumentationSpace
     , envRdPrefMap:: RdPrefMap
     , envKnwlPrefMap :: KnwlPrefMap
+    , envOrdering :: Order 
     } 
 
 instance Show Env where 
@@ -52,9 +55,11 @@ instance Has DefeasibleRules Env where obtain = envDRuleSpace
 instance Has ArgumentationSpace Env where obtain = envArguSpace 
 instance Has RdPrefMap Env where obtain = envRdPrefMap
 instance Has KnwlPrefMap Env where obtain = envKnwlPrefMap
+instance Has Order Env where obtain = envOrdering
 
 type UseRuleOnly env = (Has StrictRules env, Has DefeasibleRules env)
 type OrderingContext env = (Has RdPrefMap env, Has KnwlPrefMap env)
+type Order =  PreferenceMap -> Path -> Path ->  Bool 
 
 grab :: forall field env m . (MonadReader env m , Has field env) => m field 
 grab = asks $ obtain @field 

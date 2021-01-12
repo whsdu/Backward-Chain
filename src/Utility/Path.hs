@@ -8,7 +8,7 @@ import Data.List (sort, reverse)
 
 import qualified Space.Language as L 
 import qualified Space.Meta as M 
-import Env 
+import Env ( grab, UseRuleOnly ) 
 import qualified Utility.Ordering  as O
 import qualified Utility.Language as LU 
 
@@ -207,7 +207,7 @@ queryConcRebuts' lang pMap pathRuls conC =
         qConc = M.neg conC 
         argPath = head $ equifinalPathForQuery' (concat pathRuls) conC  -- This part do not need to lift to monad level
         attackPaths = equifinalPathForQuery' lang qConc 
-    in [p | p <- attackPaths, O.weakestLink pMap O.dem p argPath] -- This is problematic to convert to monad level 
+    in [p | p <- attackPaths, O.weakestLink O.dem pMap p argPath] -- This is problematic to convert to monad level 
 
 
 

@@ -54,6 +54,7 @@ type LanguageMap = Map.HashMap Name Literal
 newtype StrictRules = StrictRules {getStrictRules :: Language}
 newtype DefeasibleRules = DefeasibleRules {getDefeasibleRules :: Language}
 
+
 -- | name of an instantiation of type `Literal`: it plays two rules:
 -- 1. To be used to guarantee the uniqueness of a `Literal`.
 -- 2. To be used to defined negation with simple `!`.
