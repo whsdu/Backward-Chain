@@ -3,10 +3,12 @@
 1. Build the project to get the executable file.
     > `stack build --copy-bins`
 1. Demo search file is "./demoExamples/search/demo.txt" \
-   If you would like to query conclusion `p1`, ordering function is composition of `weakest-link` and `eli` then:
+   If we would like to query conclusion `p1` using the priority ordering function that is the composition of `weakest-link` and `eli` then:
     > `DT-exe ./demoExamples/search/demo.txt p1 weakest-eli`
 
     The query result includes 9 paths, each path represents a argument that related to the query conclusion (direct/indirect support/defend).
+
+    Priority functions include `weakest-eli`, `weakest-dem`, `last-eli`, `last-dem`. The default is `weakest-eli`.
 
     > ```
     > [[r6: p6 p7->p1],[r7: p8=>p6,r8: p9=>p7],[r9: p10=>p8,r10: p11=>p9],[r11: ->p10,r12: ->p11]]
