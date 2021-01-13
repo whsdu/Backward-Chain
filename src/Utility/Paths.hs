@@ -24,12 +24,12 @@ import qualified Utility.Language as LU
 {-
 EFP for single conclusion. 
 -}
-querySingleConclusion :: 
+efp' :: 
     ( MonadReader env m
     , UseRuleOnly env 
     , MonadIO m 
     ) => L.Literal -> m L.EquifinalPaths 
-querySingleConclusion conC = do
+efp' conC = do
     cs <- concludeBy conC 
     let 
         dos = (:[]) <$> cs 
@@ -106,6 +106,20 @@ Given:
 find the 
 -}
 
+query :: 
+    ( MonadReader env m 
+    , MonadIO m 
+    , OrderingContext env
+    , Has Order env 
+    , UseRuleOnly env 
+    ) => L.Literal -> m [L.EquifinalPaths]
+query query = do
+        dRules <- grab @L.DefeasibleRules
+        sRules <- grab @L.StrictRules
+        let unseen = L.getDefeasibleRules dRules ++ L.getStrictRules sRules
+        efpQuery <- efp' query 
+        evenLayer unseen efpQuery 
+
 evenLayer ::
     ( MonadReader env m 
     , MonadIO m 
@@ -127,8 +141,41 @@ oddLayer ::
     ( MonadReader env m 
     , MonadIO m 
     , OrderingContext env
+    , Has Order env 
     ) => L.Language -> L.EquifinalPaths -> m [[L.EquifinalPaths]]
-oddLayer = undefined 
+oddLayer unseen efp = do 
+    subAttackers <- mapM (queryPathAttackers' unseen) efp
+    let
+        attackPairs = zip efp subAttackers 
+        attackGroups = [ attackPair | attackPair <- attackPairs , (not . null) (snd attackPair)]
+        seen = fst <$> attackGroups
+    if length attackGroups /= length efp 
+        then pure [] 
+        else 
+            do 
+            newUnseen <- removeSeenPath' (concat seen) unseen
+            tt <- mapM (checkAttackGroup' newUnseen) attackGroups
+            if 
+                [] `notElem` tt 
+                then 
+                    pure tt 
+                else 
+                    pure [] 
+    where 
+         checkAttackGroup' :: 
+            ( MonadReader env m 
+            , MonadIO m 
+            , OrderingContext env
+            , Has Order env 
+            ) => L.Language -> (L.Path ,[L.EquifinalPaths]) -> m [L.EquifinalPaths]
+         checkAttackGroup' unseen (path, group) = do
+                defenders <- mapM (evenLayer unseen) group 
+                let 
+                    defenderGroup = concat defenders 
+                if not . null $ defenderGroup 
+                    then pure $ [path] : defenderGroup
+                    else 
+                        pure []
 
 queryPathAttackers' :: 
     ( MonadReader env m 

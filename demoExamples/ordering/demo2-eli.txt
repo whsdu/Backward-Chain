@@ -2,7 +2,7 @@ head# Trival
 # No defender, No Defeasible Rule(Strict), No Axiom
 # No Equifinal Path
 # Test cases:
-# 1. Query p1 (WL + dem) A1 + A2
+# 1. Query p1 (WL + dem) will return Nothing
 # 2. Query p1 (WL + eli)  will return Nothing
 # 3. Query !p2 (WL + eli) will return A2 and P2(sub argument of A1)
 ####
