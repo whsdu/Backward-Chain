@@ -20,8 +20,8 @@ import Control.Monad.IO.Class (MonadIO)
 --     ) => L.Path -> L.Path -> m Bool 
 -- isPreferableThan a b = undefined 
 
-lastELi :: L.PreferenceMap  -> L.Path -> L.Path -> Bool 
-lastELi = lastLink eli 
+lastEli :: L.PreferenceMap  -> L.Path -> L.Path -> Bool 
+lastEli = lastLink eli 
 
 lastDem :: L.PreferenceMap ->  L.Path -> L.Path -> Bool 
 lastDem = lastLink dem 
