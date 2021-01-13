@@ -1,10 +1,10 @@
 # DT examples
 #### Build Project and Test
-1. You could build the project to get the executable file.
+1. Build the project to get the executable file.
     > `stack build --copy-bins`
 1. Demo search file is "./demoExamples/search/demo.txt" \
-   If you would like to query conclusion `p1`, run
-    > `DT-exe ./demoExamples/search/demo.txt p1`
+   If you would like to query conclusion `p1`, ordering function is composition of `weakest-link` and `eli` then:
+    > `DT-exe ./demoExamples/search/demo.txt p1 weakest-eli`
 
     The query result includes 9 paths, each path represents a argument that related to the query conclusion (direct/indirect support/defend).
 
@@ -37,6 +37,15 @@
 
     ![Demo Graph fail](./imgs/search-demo-fail.png)
 
+1. Different Ordering function could lead to different query result:
+In this case `weakest-link` + `dem` would provide no query result because the query path is defeated. 
+```
+> DT-exe ./demoExamples/ordering/demo2-dem.txt p1 weakest-dem                                                          
+> 
+> DT-exe ./demoExamples/ordering/demo2-dem.txt p1 weakest-eli                                                                                          
+[[r1: p2 p3->p1],[r2: p4 p5->p2,r3: p6 p7->p3],[r4: =>p4,r5: =>p5,r6: =>p6,r7: =>p7]]
+```
+![Demo Graph fail](./imgs/ordering-demo2-dem.png)
 
 ## Demo
 

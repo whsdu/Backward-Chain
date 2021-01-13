@@ -2,8 +2,9 @@
 {-# Language FlexibleContexts #-}
 
 {-
-This is the rewire the module Path. 
-EvenLayer and OddLayer function is rewritten in the monad form 
+This is the rewire the module Path in the monad form. 
+I was hoping this would make the logic more clear as which turns out to be more obscured ... ╮（￣▽￣）╭
+at least now its easy to use .... ٩(*Ӧ)و
 -}
 
 module Utility.Paths where 
