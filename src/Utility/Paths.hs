@@ -185,10 +185,6 @@ queryPathAttackers' ::
     , Has Order env 
     ) => L.Language -> L.Path -> m [L.EquifinalPaths]
 queryPathAttackers' unseen path =  do 
-    rdPreMap <- L.getRdPrefMap <$> grab @L.RdPrefMap 
-    kwPreMap <- L.getKnwlPrefMap <$> grab @L.KnwlPrefMap 
-    let
-        pMap = Map.union rdPreMap kwPreMap
     nextLayerRebutting <- queryPathRebuts' unseen path
     nextLayerUndercutting <- queryPathUndercut' unseen path 
     pure $ filter ( not .null ) (nextLayerRebutting ++ nextLayerUndercutting)
@@ -245,7 +241,7 @@ equifinalPathForQuery' :: L.Language -> L.Literal -> L.EquifinalPaths
 equifinalPathForQuery' lang conC= 
     let 
         dos = (:[]) <$> concludedBy' lang conC
-    in sortEquifinalPaths . concat $ equifinalPaths' lang <$> dos
+    in sortEquifinalPaths' . concat $ equifinalPaths' lang <$> dos
     where 
         concludedBy' :: L.Language -> L.Literal -> L.Language
         concludedBy' lang l = [r | r <- lang , L.conC r == l]
@@ -275,8 +271,8 @@ equifinalPathForQuery' lang conC=
                             b <-  concat $ equifinalPaths' lang <$> equifinality 
                             pure $ sRules : b
 
-        sortEquifinalPaths :: L.EquifinalPaths -> L.EquifinalPaths 
-        sortEquifinalPaths paths = 
+        sortEquifinalPaths' :: L.EquifinalPaths -> L.EquifinalPaths 
+        sortEquifinalPaths' paths = 
             let 
                 pathLengths = length <$> paths 
                 sortedLength = sort pathLengths
