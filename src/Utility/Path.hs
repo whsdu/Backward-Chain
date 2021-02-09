@@ -54,7 +54,7 @@ efp rules = do
                         r <- concat rs 
                         pure $ rules : r
 
--- | Auxiliary function of EFP
+-- | EFP Section
 -- `bodies` is a list of proposition [a,b,c,d,...] \\
 -- These proposition supported by list of lists of rules [Ra,Rb,Rc,Rd,...] \\
 -- The core computation of this function is `foldr createParallel [[]] sublevel \\
