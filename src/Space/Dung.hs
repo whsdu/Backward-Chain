@@ -8,9 +8,11 @@ type AR = String
 type Attack = (AR,AR)
 type Attacks = [Attack]
 
+demoARs :: [String]
 demoARs = ["A","B","C", "D", "E", "F", "L", "G", "O"]
 
-demoAttacks = 
+demoAttacks :: [(String, String)]
+demoAttacks =
     [ ("A", "B")
     , ("L", "A")
     , ("B", "C")
@@ -22,9 +24,9 @@ demoAttacks =
     , ("O", "D")
     ]
 
-testARs :: [[Char]]
+testARs :: [String]
 testARs = ["A","B","C", "D", "E", "F","G"]
-testAttacks :: [([Char], [Char])]
+testAttacks :: [(String, String)]
 testAttacks = 
     [ ("A", "B")
     , ("B", "A")
@@ -38,33 +40,34 @@ testAttacks =
 
 cicleARs :: [String]
 cicleARs = ["A","B"]
-cicleAttacks :: [([Char], [Char])]
+cicleAttacks :: [(String, String)]
 cicleAttacks = 
     [ ("A","B")
     , ("B","A")
     ]
 
-demoAF :: ([[Char]], [([Char], [Char])])
+demoAF :: ([String], [(String, String)])
 demoAF = (demoARs,demoAttacks)
 
-testAF :: ([[Char]], [([Char], [Char])])
+testAF :: ([String], [(String, String)])
 testAF = (testARs, testAttacks)
 
-cicleAF :: ([String], [([Char], [Char])])
+cicleAF :: ([String], [(String, String)])
 cicleAF = (cicleARs, cicleAttacks)
 
 
-isAttack :: (Eq b, Foldable t1, Foldable t2) => (t1 b, t2 (b, b)) -> b -> b -> Bool
+isAttack ::  AF -> AR -> AR -> Bool
 isAttack (ars, attacks) a b = 
     a `elem` ars &&
     b `elem` ars &&
     (a,b) `elem` attacks
 
 -- | argument set s attack argument a 
-isSetAttack :: (Functor t, Eq b, Foldable t, Foldable t1, Foldable t2) => (t1 b, t2 (b, b)) -> t b -> b -> Bool
+isSetAttack ::  AF -> [AR] -> AR -> Bool
 isSetAttack af s b = or $ flip (isAttack af) b <$> s
 
 -- | Any two elements of argument set sars do not attack each other
+isConflictFree :: AF -> [AR] -> Bool
 isConflictFree af sars = 
     not $ or  
             [ isAttack af a b 
@@ -72,6 +75,7 @@ isConflictFree af sars =
             , b <- sars 
             ] 
 
+isAcceptable :: ([AR], Attacks) -> [AR] -> AR -> Bool
 isAcceptable af@(ars,_) [] a = 
     not $ isSetAttack af ars a  
 isAcceptable af@(ars, attacks) s a =                    
@@ -87,6 +91,6 @@ isAdmissible af s =
         &&
         and [isAcceptable af s a | a <- s]
 
-faf :: (Foldable t, Eq a) => ([a], t (a, a)) -> [a] -> [a]
+faf :: AF -> [AR] -> [AR]
 faf af@(ars, _) supportARs = [ a | a <- ars, isAcceptable af supportARs a]
 
